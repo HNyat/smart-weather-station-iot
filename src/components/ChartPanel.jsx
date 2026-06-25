@@ -173,17 +173,14 @@ export default function ChartPanel({ historyData, activeChartTab, setActiveChart
         return gradient;
       },
       fill: true,
-      tension: 0.35,
-      borderWidth: 2,
-      pointRadius: (context) => {
-        const idx = context.dataIndex;
-        return idx < rawPrimaryData.length ? 1 : 0;
-      },
+      tension: 0.4, // Tạo đường cong mềm mại hơn
+      borderWidth: 2.5,
+      pointRadius: 0, // Ẩn các chấm tròn mặc định để đường đồ thị trơn và chuyên nghiệp hơn
       pointHoverRadius: 6,
-      pointHitRadius: 15,
-      pointBackgroundColor: primaryColor,
-      pointBorderColor: 'rgba(255, 255, 255, 0.8)',
-      pointBorderWidth: 1.5
+      pointHoverBackgroundColor: primaryColor,
+      pointHoverBorderColor: '#ffffff',
+      pointHoverBorderWidth: 2,
+      pointHitRadius: 15
     }
   ];
 
@@ -192,16 +189,16 @@ export default function ChartPanel({ historyData, activeChartTab, setActiveChart
       label: secondaryLabel,
       data: alignedPredicted,
       borderColor: secondaryColor,
-      borderDash: [5, 5],
+      borderDash: [6, 4], // Đường đứt nét dự báo AI đẹp hơn
       fill: false,
-      tension: 0.35,
+      tension: 0.4,
       borderWidth: 2,
-      pointRadius: 1.5,
+      pointRadius: 0,
       pointHoverRadius: 6,
-      pointHitRadius: 15,
-      pointBackgroundColor: secondaryColor,
-      pointBorderColor: 'rgba(255, 255, 255, 0.8)',
-      pointBorderWidth: 1.5
+      pointHoverBackgroundColor: secondaryColor,
+      pointHoverBorderColor: '#ffffff',
+      pointHoverBorderWidth: 2,
+      pointHitRadius: 15
     });
   }
 
@@ -215,12 +212,16 @@ export default function ChartPanel({ historyData, activeChartTab, setActiveChart
     maintainAspectRatio: false,
     plugins: {
       legend: {
-        display: false // We will render a custom legend to match the mockups
+        display: false
       },
       tooltip: {
-        backgroundColor: 'rgba(28, 27, 29, 0.95)',
-        titleColor: '#e5e2e3',
-        bodyColor: '#c7c6cd',
+        backgroundColor: 'rgba(17, 17, 19, 0.95)',
+        titleColor: '#ffffff',
+        bodyColor: 'rgba(255, 255, 255, 0.85)',
+        borderColor: 'rgba(255, 255, 255, 0.08)',
+        borderWidth: 1,
+        borderRadius: 12,
+        padding: 12,
         titleFont: {
           family: 'Sora',
           size: 12,
@@ -228,14 +229,12 @@ export default function ChartPanel({ historyData, activeChartTab, setActiveChart
         },
         bodyFont: {
           family: 'Inter',
-          size: 12
+          size: 11
         },
-        padding: 12,
-        borderColor: 'rgba(255, 255, 255, 0.08)',
-        borderWidth: 1,
-        borderRadius: 10,
-        usePointStyle: true,
+        boxWidth: 8,
+        boxHeight: 8,
         boxPadding: 6,
+        usePointStyle: true,
         callbacks: {
           labelColor: function(context) {
             return {
@@ -255,17 +254,14 @@ export default function ChartPanel({ historyData, activeChartTab, setActiveChart
     scales: {
       x: {
         grid: {
-          color: 'rgba(255, 255, 255, 0.025)',
-          border: {
-            dash: [4, 4],
-            display: false
-          }
+          display: false // Ẩn hoàn toàn lưới dọc giúp biểu đồ thoáng hơn
         },
         ticks: {
-          color: '#909097',
+          color: 'rgba(255, 255, 255, 0.4)',
           maxRotation: 0,
           autoSkip: true,
           maxTicksLimit: 8,
+          padding: 8,
           font: {
             family: 'Inter',
             size: 10,
@@ -275,17 +271,18 @@ export default function ChartPanel({ historyData, activeChartTab, setActiveChart
       },
       y: {
         grid: {
-          color: 'rgba(255, 255, 255, 0.025)',
-          border: {
-            dash: [4, 4],
-            display: false
-          }
+          color: 'rgba(255, 255, 255, 0.04)', // Lưới ngang mờ ảo
+          drawTicks: false
+        },
+        border: {
+          display: false // Ẩn đường viền trục Y
         },
         ticks: {
-          color: '#909097',
+          color: 'rgba(255, 255, 255, 0.4)',
+          padding: 12,
           font: {
             family: 'Inter',
-            size: 11,
+            size: 10,
             weight: '500'
           }
         }
@@ -309,7 +306,7 @@ export default function ChartPanel({ historyData, activeChartTab, setActiveChart
         ctx.moveTo(x, topY);
         ctx.lineTo(x, bottomY);
         ctx.lineWidth = 1;
-        ctx.strokeStyle = 'rgba(255, 255, 255, 0.15)';
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
         ctx.setLineDash([4, 4]);
         ctx.stroke();
         ctx.restore();
@@ -321,55 +318,58 @@ export default function ChartPanel({ historyData, activeChartTab, setActiveChart
     <div className="glass-card p-6 flex flex-col min-h-[400px]">
       {/* Title & Tabs */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
-        <h3 className="font-headline-sm text-lg md:text-xl font-bold text-on-surface">Biểu Đồ Khí Hậu Canh Tác (8 Kênh)</h3>
+        <div className="flex flex-col gap-1">
+          <h3 className="font-headline-sm text-lg md:text-xl font-bold text-on-surface">Biểu Đồ Khí Hậu Canh Tác</h3>
+          <p className="text-[11px] text-on-surface-variant">So sánh thực tế với dự báo AI (+1h) và kéo dài tương lai</p>
+        </div>
         
         {/* Navigation Tabs */}
-        <div className="flex flex-wrap bg-surface-container-lowest/50 border border-glass-border rounded-full p-1 gap-1 w-full md:w-auto overflow-x-auto">
+        <div className="flex flex-wrap bg-surface-container/60 border border-glass-border/30 rounded-xl p-1 gap-1 w-full md:w-auto overflow-x-auto">
           <button 
-            className={`px-3 py-1.5 text-[10px] font-label-caps uppercase rounded-full transition-all duration-200 ${
+            className={`px-3.5 py-1.5 text-[10px] font-bold rounded-lg transition-all duration-200 ${
               activeChartTab === 'temp' 
-                ? 'bg-temp-orange/20 border border-temp-orange/30 text-temp-orange font-bold' 
-                : 'text-on-surface-variant hover:text-on-surface'
+                ? 'bg-temp-orange/15 text-temp-orange border border-temp-orange/30 shadow-[0_2px_8px_rgba(249,115,22,0.1)]' 
+                : 'text-on-surface-variant hover:text-on-surface hover:bg-surface-container-highest/40'
             }`}
             onClick={() => setActiveChartTab('temp')}
           >
             Nhiệt Độ
           </button>
           <button 
-            className={`px-3 py-1.5 text-[10px] font-label-caps uppercase rounded-full transition-all duration-200 ${
+            className={`px-3.5 py-1.5 text-[10px] font-bold rounded-lg transition-all duration-200 ${
               activeChartTab === 'hum' 
-                ? 'bg-humidity-cyan/20 border border-humidity-cyan/30 text-humidity-cyan font-bold' 
-                : 'text-on-surface-variant hover:text-on-surface'
+                ? 'bg-humidity-cyan/15 text-humidity-cyan border border-humidity-cyan/30 shadow-[0_2px_8px_rgba(0,242,255,0.1)]' 
+                : 'text-on-surface-variant hover:text-on-surface hover:bg-surface-container-highest/40'
             }`}
             onClick={() => setActiveChartTab('hum')}
           >
             Độ Ẩm
           </button>
           <button 
-            className={`px-3 py-1.5 text-[10px] font-label-caps uppercase rounded-full transition-all duration-200 ${
+            className={`px-3.5 py-1.5 text-[10px] font-bold rounded-lg transition-all duration-200 ${
               activeChartTab === 'pres' 
-                ? 'bg-primary/20 border border-primary/30 text-primary font-bold' 
-                : 'text-on-surface-variant hover:text-on-surface'
+                ? 'bg-primary/15 text-primary border border-primary/30 shadow-[0_2px_8px_rgba(249,115,22,0.1)]' 
+                : 'text-on-surface-variant hover:text-on-surface hover:bg-surface-container-highest/40'
             }`}
             onClick={() => setActiveChartTab('pres')}
           >
             Áp Suất
           </button>
           <button 
-            className={`px-3 py-1.5 text-[10px] font-label-caps uppercase rounded-full transition-all duration-200 ${
+            className={`px-3.5 py-1.5 text-[10px] font-bold rounded-lg transition-all duration-200 ${
               activeChartTab === 'rain' 
-                ? 'bg-air-quality-green/20 border border-air-quality-green/30 text-air-quality-green font-bold' 
-                : 'text-on-surface-variant hover:text-on-surface'
+                ? 'bg-air-quality-green/15 text-air-quality-green border border-air-quality-green/30 shadow-[0_2px_8px_rgba(16,185,129,0.1)]' 
+                : 'text-on-surface-variant hover:text-on-surface hover:bg-surface-container-highest/40'
             }`}
             onClick={() => setActiveChartTab('rain')}
           >
             Lượng Mưa
           </button>
           <button 
-            className={`px-3 py-1.5 text-[10px] font-label-caps uppercase rounded-full transition-all duration-200 ${
+            className={`px-3.5 py-1.5 text-[10px] font-bold rounded-lg transition-all duration-200 ${
               activeChartTab === 'bat' 
-                ? 'bg-secondary-fixed-dim/20 border border-secondary-fixed-dim/30 text-secondary-fixed-dim font-bold' 
-                : 'text-on-surface-variant hover:text-on-surface'
+                ? 'bg-secondary-fixed-dim/15 text-secondary-fixed-dim border border-secondary-fixed-dim/30 shadow-[0_2px_8px_rgba(255,255,255,0.05)]' 
+                : 'text-on-surface-variant hover:text-on-surface hover:bg-surface-container-highest/40'
             }`}
             onClick={() => setActiveChartTab('bat')}
           >
@@ -384,15 +384,15 @@ export default function ChartPanel({ historyData, activeChartTab, setActiveChart
       </div>
 
       {/* Custom Legend */}
-      <div className="flex flex-wrap gap-x-6 gap-y-2 mt-4 font-data-mono text-xs text-on-surface-variant justify-end">
-        <div className="flex items-center gap-2">
-          <div className="w-3 h-3 rounded-full" style={{ backgroundColor: primaryColor }}></div>
-          <span>{primaryLabel}</span>
+      <div className="flex flex-wrap gap-x-4 gap-y-2 mt-5 justify-end font-data-mono text-[10px]">
+        <div className="flex items-center gap-2 px-2.5 py-1 bg-surface-container-lowest/30 border border-glass-border/30 rounded-full">
+          <div className="w-2 h-2 rounded-full" style={{ backgroundColor: primaryColor }}></div>
+          <span className="text-on-surface">{primaryLabel}</span>
         </div>
         {showSecondary && (
-          <div className="flex items-center gap-2">
-            <div className="w-3 h-0.5 border-t border-dashed" style={{ borderColor: secondaryColor, borderWidth: '2px' }}></div>
-            <span>{secondaryLabel}</span>
+          <div className="flex items-center gap-2 px-2.5 py-1 bg-surface-container-lowest/30 border border-glass-border/30 rounded-full">
+            <div className="w-2.5 h-0.5 border-t border-dashed" style={{ borderColor: secondaryColor, borderWidth: '2px' }}></div>
+            <span className="text-on-surface">{secondaryLabel}</span>
           </div>
         )}
       </div>
