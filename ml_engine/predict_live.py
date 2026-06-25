@@ -10,6 +10,7 @@ import datetime
 import pandas as pd
 import numpy as np
 import joblib
+import sqlite3
 
 
 # Configuration defaults
@@ -53,6 +54,67 @@ def fetch_latest_feeds(channel_id, read_key):
         
     return feeds
 
+def detect_and_sanitize_anomalies(df):
+    """
+    Phát hiện và xử lý các giá trị bất thường của cảm biến (nhiễu vật lý hoặc sốc đột ngột)
+    bằng cách chuyển chúng thành NaN và thực hiện điền khuyết (Forward Fill).
+    """
+    df_clean = df.copy()
+    
+    # Đảm bảo các cột cảm biến có kiểu số thực để tránh lỗi so sánh hoặc kiểu Object
+    for col in ["temperature", "humidity", "pressure", "rain_analog", "battery"]:
+        df_clean[col] = pd.to_numeric(df_clean[col], errors='coerce')
+    
+    # 1. Kiểm tra ngưỡng vật lý
+    temp_out_of_range = (df_clean["temperature"] < 0) | (df_clean["temperature"] > 55)
+    hum_out_of_range = (df_clean["humidity"] < 0) | (df_clean["humidity"] > 100)
+    pres_out_of_range = (df_clean["pressure"] < 950) | (df_clean["pressure"] > 1050)
+    bat_out_of_range = (df_clean["battery"] < 0) | (df_clean["battery"] > 100)
+    
+    if temp_out_of_range.any():
+        print(f"CẢNH BÁO AI: Phát hiện {temp_out_of_range.sum()} giá trị nhiệt độ ngoài ngưỡng vật lý [0-55°C]. Sẽ tự động làm sạch.")
+        df_clean.loc[temp_out_of_range, "temperature"] = np.nan
+        
+    if hum_out_of_range.any():
+        print(f"CẢNH BÁO AI: Phát hiện {hum_out_of_range.sum()} giá trị độ ẩm ngoài ngưỡng vật lý [0-100%]. Sẽ tự động làm sạch.")
+        df_clean.loc[hum_out_of_range, "humidity"] = np.nan
+        
+    if pres_out_of_range.any():
+        print(f"CẢNH BÁO AI: Phát hiện {pres_out_of_range.sum()} giá trị khí áp ngoài ngưỡng vật lý [950-1050 hPa]. Sẽ tự động làm sạch.")
+        df_clean.loc[pres_out_of_range, "pressure"] = np.nan
+
+    if bat_out_of_range.any():
+        print(f"CẢNH BÁO AI: Phát hiện {bat_out_of_range.sum()} giá trị pin ngoài ngưỡng vật lý [0-100%]. Sẽ tự động làm sạch.")
+        df_clean.loc[bat_out_of_range, "battery"] = np.nan
+        
+    # 2. Kiểm tra biến động đột biến (Spike Detection) so với dòng trước đó
+    if len(df_clean) > 1:
+        temp_filled = df_clean["temperature"].ffill()
+        temp_diff = temp_filled.diff().abs()
+        temp_spikes = temp_diff > 12.0
+        if temp_spikes.any():
+            print(f"CẢNH BÁO AI: Phát hiện {temp_spikes.sum()} điểm biến động nhiệt độ đột biến (>12°C). Sẽ tự động làm sạch.")
+            df_clean.loc[temp_spikes, "temperature"] = np.nan
+            
+        hum_filled = df_clean["humidity"].ffill()
+        hum_diff = hum_filled.diff().abs()
+        hum_spikes = hum_diff > 35.0
+        if hum_spikes.any():
+            print(f"CẢNH BÁO AI: Phát hiện {hum_spikes.sum()} điểm biến động độ ẩm đột biến (>35%). Sẽ tự động làm sạch.")
+            df_clean.loc[hum_spikes, "humidity"] = np.nan
+            
+    # 3. Điền khuyết lại các giá trị bị gán NaN bằng forward fill/backward fill
+    df_clean = df_clean.ffill().bfill()
+    return df_clean
+
+def calculate_heat_index(temp, hum):
+    """
+    Tính toán chỉ số nhiệt oi bức (Heat Index) dựa trên nhiệt độ và độ ẩm thực tế.
+    Với các giá trị nhiệt độ thấp hơn 27°C, chỉ số nhiệt tương đương với nhiệt độ thực tế.
+    """
+    hi = 0.5 * (temp + 61.0 + ((temp - 68.0) * 1.2) + (hum * 0.094))
+    return temp if temp < 27.0 else hi
+
 def preprocess_and_predict(feeds, feature_cols, model_temp, model_hum, model_status):
     """
     Parses current feeds, builds feature vectors using lag values,
@@ -66,13 +128,14 @@ def preprocess_and_predict(feeds, feature_cols, model_temp, model_hum, model_sta
             "temperature": float(f["field1"]) if f["field1"] is not None and f["field1"] != "" else None,
             "humidity": float(f["field2"]) if f["field2"] is not None and f["field2"] != "" else None,
             "pressure": float(f["field3"]) if f["field3"] is not None and f["field3"] != "" else None,
-            "rain_analog": int(f["field4"]) if f["field4"] is not None and f["field4"] != "" else None
+            "rain_analog": int(f["field4"]) if f["field4"] is not None and f["field4"] != "" else None,
+            "battery": int(f["field5"]) if f["field5"] is not None and f["field5"] != "" else None
         })
     
     df = pd.DataFrame(df_list)
     
-    # Điền khuyết dữ liệu bằng forward fill / backward fill
-    df = df.ffill().bfill()
+    # Phát hiện và làm sạch các giá trị bất thường
+    df = detect_and_sanitize_anomalies(df)
 
     # Xử lý dự phòng nếu toàn bộ cột trống (do cảm biến offline lâu ngày)
     if df["temperature"].isna().all():
@@ -87,6 +150,9 @@ def preprocess_and_predict(feeds, feature_cols, model_temp, model_hum, model_sta
     if df["rain_analog"].isna().all():
         print("CẢNH BÁO: Cảm biến Mưa offline. Dùng giá trị mặc định 1023 (Không mưa)")
         df["rain_analog"] = df["rain_analog"].fillna(1023)
+    if df["battery"].isna().all():
+        print("CẢNH BÁO: Cảm biến Pin offline. Dùng giá trị mặc định 100 %")
+        df["battery"] = df["battery"].fillna(100)
         
     df = df.ffill().bfill()
     
@@ -103,8 +169,6 @@ def preprocess_and_predict(feeds, feature_cols, model_temp, model_hum, model_sta
     
     # Tìm bản ghi gần nhất với 1 giờ trước (t-1h)
     target_time_1h = latest_time - pd.Timedelta(hours=1)
-    
-    # Tính hiệu số thời gian tuyệt đối của mỗi hàng so với mốc 1 giờ trước và lấy hàng có khoảng cách nhỏ nhất
     idx_1h = (df["created_at_dt"] - target_time_1h).abs().idxmin()
     row_1h = df.loc[idx_1h]
     
@@ -119,6 +183,22 @@ def preprocess_and_predict(feeds, feature_cols, model_temp, model_hum, model_sta
     else:
         print(f"Đã tìm thấy bản ghi chuẩn xác từ 1 giờ trước: {row_1h['created_at_dt']} (lệch {time_diff_mins:.1f} phút)")
         
+    # Tìm bản ghi gần nhất với 4 giờ trước (t-4h) để tính toán xu hướng áp suất trung hạn
+    target_time_4h = latest_time - pd.Timedelta(hours=4)
+    idx_4h = (df["created_at_dt"] - target_time_4h).abs().idxmin()
+    row_4h = df.loc[idx_4h]
+    
+    # Kiểm tra nếu khoảng cách thời gian vượt quá 40 phút thì dùng fallback
+    time_diff_mins_4h = abs((row_4h["created_at_dt"] - target_time_4h).total_seconds()) / 60.0
+    if time_diff_mins_4h > 40.0:
+        if len(df) >= 120:
+            row_4h = df.iloc[-120]
+        else:
+            row_4h = df.iloc[0]
+        print(f"CẢNH BÁO: Không tìm thấy bản ghi lý tưởng từ 4 giờ trước. Sử dụng fallback từ timestamp {row_4h['created_at_dt']}")
+    else:
+        print(f"Đã tìm thấy bản ghi chuẩn xác từ 4 giờ trước: {row_4h['created_at_dt']} (lệch {time_diff_mins_4h:.1f} phút)")
+
     temp_t = latest_row["temperature"]
     temp_t1 = row_1h["temperature"]
     
@@ -127,13 +207,25 @@ def preprocess_and_predict(feeds, feature_cols, model_temp, model_hum, model_sta
     
     pres_t = latest_row["pressure"]
     pres_t1 = row_1h["pressure"]
+    pres_t4 = row_4h["pressure"]
     
     rain_t = latest_row["rain_analog"]
     rain_t1 = row_1h["rain_analog"]
     
-    # Tạo vector đặc trưng đầu vào
+    bat_t = latest_row["battery"]
+    
+    # Tính toán các đặc trưng xu hướng, chỉ số oi bức và lượng giác hóa thời gian
+    target_hour = (current_hour + 1) % 24
+    hour_sin = np.sin(2 * np.pi * target_hour / 24)
+    hour_cos = np.cos(2 * np.pi * target_hour / 24)
+    
+    pres_trend_3h = pres_t1 - pres_t4
+    heat_index_lag1 = calculate_heat_index(temp_t1, hum_t1)
+    
+    # Tạo vector đặc trưng đầu vào khớp 100% với train.py
     input_data = {
-        "hour": (current_hour + 1) % 24,
+        "hour_sin": hour_sin,
+        "hour_cos": hour_cos,
         "temp_lag1": temp_t,
         "temp_lag2": temp_t1,
         "temp_diff": temp_t - temp_t1,
@@ -145,9 +237,11 @@ def preprocess_and_predict(feeds, feature_cols, model_temp, model_hum, model_sta
         "pres_lag1": pres_t,
         "pres_lag2": pres_t1,
         "pres_diff": pres_t - pres_t1,
+        "pres_trend_3h": pres_trend_3h,
         
         "rain_lag1": rain_t,
-        "rain_lag2": rain_t1
+        "rain_lag2": rain_t1,
+        "heat_index_lag1": heat_index_lag1
     }
     
     # Chuyển đổi thành DataFrame và khớp thứ tự cột
@@ -162,7 +256,6 @@ def preprocess_and_predict(feeds, feature_cols, model_temp, model_hum, model_sta
     status_probs = model_status.predict_proba(X_new)[0]
     
     # Xác suất mưa được tính bằng xác suất của lớp Mưa (chỉ số 2 trong classes_ [0, 1, 2])
-    # Nếu mô hình phân loại chưa train đủ các lớp, cần kiểm tra kích thước xác suất
     classes = list(model_status.classes_)
     rain_prob = 0.0
     if 2 in classes:
@@ -170,7 +263,11 @@ def preprocess_and_predict(feeds, feature_cols, model_temp, model_hum, model_sta
         rain_prob = status_probs[rain_class_idx] * 100.0
     else:
         # Nếu chưa có lớp mưa, sử dụng cảm biến mưa trực tiếp để suy luận xác suất
-        rain_prob = 90.0 if rain_t < 500 else 10.0
+        rain_prob = 90.0 if rain_t < 700 else 10.0
+        
+    # Hiệu chỉnh vật lý thời gian thực: Nếu trạm đang phát hiện mưa, xác suất mưa tiếp diễn phải >= 60%
+    if rain_t < 700:
+        rain_prob = max(rain_prob, 60.0 + (700 - rain_t) * 0.05)
         
     print(f"--- KẾT QUẢ DỰ BÁO AI (+1h) ---")
     print(f"Thời gian hiện tại: {local_time.strftime('%Y-%m-%d %H:%M:%S')} (Giờ: {current_hour})")
@@ -182,16 +279,21 @@ def preprocess_and_predict(feeds, feature_cols, model_temp, model_hum, model_sta
     status_map = {0: "Nắng ráo ☀️", 1: "Nhiều mây ☁️", 2: "Mưa dông 🌧️"}
     print(f"Trạng thái thời tiết dự đoán: {status_map.get(pred_status, 'Chưa rõ')}")
     
-    return pred_temp, rain_prob, input_data["pres_diff"]
+    return pred_temp, pred_hum, rain_prob, pred_status, input_data["pres_diff"], temp_t, hum_t, pres_t, rain_t, bat_t, latest_row["created_at"]
 
-def upload_predictions(write_key, pred_temp, rain_prob, pres_diff):
-    """Uploads the predicted values back to ThingSpeak (field6, field7, field8)"""
+def upload_predictions(write_key, pred_temp, pred_hum, rain_prob, temp_t, hum_t, pres_t, rain_t, bat_t):
+    """Uploads both predictions and carry-over latest sensor metrics to ThingSpeak (fields 1-8)"""
     url = f"https://api.thingspeak.com/update?api_key={write_key}"
+    url += f"&field1={temp_t:.2f}"
+    url += f"&field2={hum_t:.2f}"
+    url += f"&field3={pres_t:.2f}"
+    url += f"&field4={int(rain_t)}"
+    url += f"&field5={int(bat_t)}"
     url += f"&field6={pred_temp:.2f}"
     url += f"&field7={rain_prob:.1f}"
-    url += f"&field8={pres_diff:.3f}"
+    url += f"&field8={pred_hum:.2f}" # Field 8 đổi thành dự báo độ ẩm
     
-    print(f"Đang tải kết quả dự báo lên ThingSpeak...")
+    print(f"Đang tải kết quả dự báo và dữ liệu cảm biến đồng nhất lên ThingSpeak...")
     try:
         response = requests.get(url, timeout=10)
         response.raise_for_status()
@@ -202,6 +304,58 @@ def upload_predictions(write_key, pred_temp, rain_prob, pres_diff):
             print(f"Cập nhật thành công! Entry ID trên ThingSpeak: {result_id}")
     except Exception as e:
         print(f"Lỗi khi gửi kết quả lên ThingSpeak: {e}")
+
+def save_to_local_db(timestamp, temp, hum, pres, rain, bat, pred_temp, pred_hum, rain_prob, pred_status, pres_diff):
+    """Lưu trữ dữ liệu cảm biến thực tế và dự báo AI vào SQLite cục bộ"""
+    os.makedirs("data", exist_ok=True)
+    db_path = "data/sensor_warehouse.db"
+    
+    print(f"Đang kết nối cơ sở dữ liệu SQLite cục bộ tại {db_path}...")
+    try:
+        conn = sqlite3.connect(db_path)
+        cursor = conn.cursor()
+        
+        # Khởi tạo bảng nếu chưa tồn tại
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS weather_history (
+                timestamp TEXT PRIMARY KEY,
+                temperature REAL,
+                humidity REAL,
+                pressure REAL,
+                rain_analog INTEGER,
+                battery_pct INTEGER,
+                predicted_temp REAL,
+                predicted_humidity REAL,
+                rain_probability REAL,
+                predicted_status INTEGER,
+                pressure_diff REAL
+            )
+        """)
+        
+        # Tự động nâng cấp cột predicted_humidity nếu bảng cũ chưa có
+        cursor.execute("PRAGMA table_info(weather_history)")
+        columns = [info[1] for info in cursor.fetchall()]
+        if "predicted_humidity" not in columns:
+            try:
+                cursor.execute("ALTER TABLE weather_history ADD COLUMN predicted_humidity REAL")
+                conn.commit()
+                print("Đã tự động nâng cấp cấu trúc bảng SQLite: thêm cột 'predicted_humidity'.")
+            except Exception as alter_err:
+                print(f"Cảnh báo khi thêm cột 'predicted_humidity': {alter_err}")
+        
+        # Chèn hoặc ghi đè dữ liệu
+        cursor.execute("""
+            INSERT OR REPLACE INTO weather_history (
+                timestamp, temperature, humidity, pressure, rain_analog, battery_pct,
+                predicted_temp, predicted_humidity, rain_probability, predicted_status, pressure_diff
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """, (str(timestamp), temp, hum, pres, rain, bat, pred_temp, pred_hum, rain_prob, int(pred_status), pres_diff))
+        
+        conn.commit()
+        conn.close()
+        print(f"Đã lưu bản ghi thời gian {timestamp} thành công vào SQLite (sensor_warehouse.db).")
+    except Exception as e:
+        print(f"Lỗi khi lưu dữ liệu vào SQLite cục bộ: {e}")
 
 def main():
     check_models_exist()
@@ -220,10 +374,11 @@ def main():
     
     try:
         feeds = fetch_latest_feeds(channel_id, read_key)
-        pred_temp, rain_prob, pres_diff = preprocess_and_predict(
+        pred_temp, pred_hum, rain_prob, pred_status, pres_diff, temp_t, hum_t, pres_t, rain_t, bat_t, timestamp = preprocess_and_predict(
             feeds, feature_cols, model_temp, model_hum, model_status
         )
-        upload_predictions(write_key, pred_temp, rain_prob, pres_diff)
+        upload_predictions(write_key, pred_temp, pred_hum, rain_prob, temp_t, hum_t, pres_t, rain_t, bat_t)
+        save_to_local_db(timestamp, temp_t, hum_t, pres_t, rain_t, bat_t, pred_temp, pred_hum, rain_prob, pred_status, pres_diff)
     except Exception as e:
         print(f"Lỗi xảy ra trong quá trình thực thi: {e}")
 

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 
-export default function Header({ dataSource, setDataSource, toggleModal, isOnline, connectionText }) {
+export default function Header({ dataSource, setDataSource, toggleModal, isOnline, connectionText, relayState }) {
   const [timeStr, setTimeStr] = useState('');
 
   // Update clock every second
@@ -27,6 +27,14 @@ export default function Header({ dataSource, setDataSource, toggleModal, isOnlin
             {connectionText}
           </span>
         </div>
+        {relayState && (
+          <div className="flex items-center gap-2 px-3 py-1 bg-secondary-container/30 rounded-full border border-secondary/30 animate-pulse">
+            <span className="w-2.5 h-2.5 rounded-full bg-temp-orange animate-ping"></span>
+            <span className="font-label-caps text-[10px] text-temp-orange uppercase font-bold">
+              Pump Active
+            </span>
+          </div>
+        )}
       </div>
 
       {/* Center Data Source Switcher */}

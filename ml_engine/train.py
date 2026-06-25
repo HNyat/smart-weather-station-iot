@@ -124,6 +124,14 @@ def generate_mock_historical_data():
     df.to_csv(DATASET_PATH, index=False)
     return df
 
+def calculate_heat_index(temp, hum):
+    """
+    Tính toán chỉ số nhiệt oi bức (Heat Index) dựa trên nhiệt độ và độ ẩm thực tế.
+    Với các giá trị nhiệt độ thấp hơn 27°C, chỉ số nhiệt tương đương với nhiệt độ thực tế.
+    """
+    hi = 0.5 * (temp + 61.0 + ((temp - 68.0) * 1.2) + (hum * 0.094))
+    return np.where(temp < 27.0, temp, hi)
+
 def feature_engineering(df):
     """
     Creates lag features and diff features for time series forecasting.
@@ -131,10 +139,12 @@ def feature_engineering(df):
     """
     print("=== 2. Thiết kế Đặc trưng (Feature Engineering) ===")
     
-    # Trích xuất giờ để học chu kỳ ngày/đêm
-    df["hour"] = pd.to_datetime(df["timestamp"]).dt.hour
+    # 1. Trích xuất đặc trưng tuần hoàn thời gian (Cyclic hour)
+    hour = pd.to_datetime(df["timestamp"]).dt.hour
+    df["hour_sin"] = np.sin(2 * np.pi * hour / 24)
+    df["hour_cos"] = np.cos(2 * np.pi * hour / 24)
     
-    # Tạo các biến trễ (Lag features) - giá trị của 1 giờ trước và 2 giờ trước
+    # 2. Tạo các biến trễ (Lag features)
     df["temp_lag1"] = df["temperature"].shift(1)
     df["temp_lag2"] = df["temperature"].shift(2)
     df["temp_diff"] = df["temp_lag1"] - df["temp_lag2"]
@@ -145,12 +155,19 @@ def feature_engineering(df):
     
     df["pres_lag1"] = df["pressure"].shift(1)
     df["pres_lag2"] = df["pressure"].shift(2)
-    df["pres_diff"] = df["pres_lag1"] - df["pres_lag2"] # Xu hướng khí áp (Pressure slope)
+    df["pres_diff"] = df["pres_lag1"] - df["pres_lag2"] # Xu hướng khí áp ngắn hạn (1h)
+    
+    # Xu hướng khí áp trung hạn (3h: thay đổi giữa 1h trước và 4h trước)
+    df["pres_trend_3h"] = df["pressure"].shift(1) - df["pressure"].shift(4)
     
     df["rain_lag1"] = df["rain_analog"].shift(1)
     df["rain_lag2"] = df["rain_analog"].shift(2)
     
-    # 3. Tạo các biến mục tiêu (Targets) cần dự đoán cho chu kỳ TIẾP THEO (+1h)
+    # 3. Tính toán chỉ số nhiệt cảm nhận (Heat Index) và độ trễ của nó
+    df["heat_index"] = calculate_heat_index(df["temperature"], df["humidity"])
+    df["heat_index_lag1"] = df["heat_index"].shift(1)
+    
+    # 4. Tạo các biến mục tiêu (Targets) cần dự đoán cho chu kỳ TIẾP THEO (+1h)
     df["target_temp"] = df["temperature"]
     df["target_hum"] = df["humidity"]
     
@@ -175,11 +192,12 @@ def feature_engineering(df):
     
     # Định nghĩa các đặc trưng đầu vào cho mô hình (Features)
     feature_cols = [
-        "hour",
+        "hour_sin", "hour_cos",
         "temp_lag1", "temp_lag2", "temp_diff",
         "hum_lag1", "hum_lag2", "hum_diff",
-        "pres_lag1", "pres_lag2", "pres_diff",
-        "rain_lag1", "rain_lag2"
+        "pres_lag1", "pres_lag2", "pres_diff", "pres_trend_3h",
+        "rain_lag1", "rain_lag2",
+        "heat_index_lag1"
     ]
     
     return df, feature_cols
@@ -223,7 +241,7 @@ def train_and_evaluate():
     
     # C. Model dự đoán Trạng thái Thời tiết & Xác suất mưa
     print("Đang huấn luyện mô hình phân loại Trạng thái Thời tiết...")
-    model_status = RandomForestClassifier(n_estimators=150, max_depth=10, random_state=42)
+    model_status = RandomForestClassifier(n_estimators=150, max_depth=10, class_weight="balanced", random_state=42)
     model_status.fit(X_train, y_status_train)
     pred_status = model_status.predict(X_test)
     acc_status = accuracy_score(y_status_test, pred_status)

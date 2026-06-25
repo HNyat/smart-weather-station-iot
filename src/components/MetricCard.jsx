@@ -1,6 +1,6 @@
 import React from 'react';
 
-export default function MetricCard({ type, value, rawValue, trendText }) {
+export default function MetricCard({ type, value, rawValue, trendText, predictedValue }) {
   let icon = null;
   let title = "";
   let unit = "";
@@ -17,11 +17,18 @@ export default function MetricCard({ type, value, rawValue, trendText }) {
         </div>
       );
       extraContent = (
-        <div className="mt-4 h-1 w-full bg-surface-container rounded-full overflow-hidden">
-          <div 
-            className="h-full bg-humidity-cyan transition-all duration-500" 
-            style={{ width: `${value !== null ? Math.min(Math.max(value, 0), 100) : 0}%` }}
-          ></div>
+        <div className="mt-4 flex flex-col gap-2 w-full">
+          <div className="h-1 w-full bg-surface-container rounded-full overflow-hidden">
+            <div 
+              className="h-full bg-humidity-cyan transition-all duration-500" 
+              style={{ width: `${value !== null ? Math.min(Math.max(value, 0), 100) : 0}%` }}
+            ></div>
+          </div>
+          {predictedValue !== null && (
+            <span className="text-[10px] text-humidity-cyan font-bold font-data-mono">
+              Dự báo AI (+1h): {predictedValue.toFixed(1)}%
+            </span>
+          )}
         </div>
       );
       break;
@@ -52,8 +59,13 @@ export default function MetricCard({ type, value, rawValue, trendText }) {
       }
 
       extraContent = (
-        <div className="mt-2 flex flex-col gap-1">
+        <div className="mt-2 flex flex-col gap-1.5">
           <span className="text-[10px] text-on-surface-variant font-data-mono">{trendText || 'Hồi quy: Đang tính...'}</span>
+          {predictedValue !== null && (
+            <span className="text-[10px] text-primary font-bold font-data-mono">
+              Dự báo AI (+1h): {predictedValue.toFixed(1)} hPa
+            </span>
+          )}
           <div>
             <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold ${badgeClass}`}>
               {badgeText}

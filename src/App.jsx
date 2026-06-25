@@ -23,6 +23,7 @@ export default function App() {
   const [isOnline, setIsOnline] = useState(false);
   const [connectionText, setConnectionText] = useState('Đang kết nối...');
   const [activeChartTab, setActiveChartTab] = useState('temp');
+  const [relayState, setRelayState] = useState(false);
 
   const [currentData, setCurrentData] = useState({
     temperature: null,
@@ -31,6 +32,8 @@ export default function App() {
     rain: null,
     battery: null,
     predictedTemp: null,
+    predictedHumidity: null,
+    predictedPressure: null,
     rainProbability: null,
     predictedStatus: null,
     rssi: -70,
@@ -89,6 +92,32 @@ export default function App() {
     }
   };
 
+  const handleToggleRelay = () => {
+    const newState = !relayState;
+    setRelayState(newState);
+    
+    if (config.dataSource === 'local') {
+      const url = `http://${config.espIp}/control?relay=${newState ? 1 : 0}`;
+      fetch(url)
+        .then(res => {
+          if (!res.ok) throw new Error("Không kết nối được gateway");
+          return res.json();
+        })
+        .then(data => {
+          console.log("Cập nhật trạng thái relay từ gateway:", data);
+          setRelayState(data.relay === 1);
+        })
+        .catch(err => {
+          console.error("Lỗi điều khiển relay cục bộ:", err);
+          alert("Lỗi: Không kết nối được Gateway ESP8266 để điều khiển máy bơm!");
+          setRelayState(!newState); // rollback
+        });
+    } else {
+      // Cloud mode: simulation with alert
+      alert(`[Chế độ Cloud] Đang mô phỏng gửi tín hiệu điều khiển máy bơm: ${newState ? 'BẬT' : 'TẮT'}`);
+    }
+  };
+
   const addLocalHistory = (data) => {
     const now = new Date();
     const timeStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}:${String(now.getSeconds()).padStart(2, '0')}`;
@@ -133,6 +162,8 @@ export default function App() {
       rain: rainRand,
       battery: 98,
       predictedTemp: parseFloat((tempVal + 0.4 - Math.random() * 0.8).toFixed(1)),
+      predictedHumidity: parseFloat((humVal + 2 - Math.random() * 4).toFixed(1)),
+      predictedPressure: parseFloat((presVal + 0.5 - Math.random() * 1).toFixed(1)),
       rainProbability: rainRand < 500 ? 95 : 15,
       predictedStatus: rainRand < 500 ? 2 : (humVal > 78 ? 1 : 0),
       rssi: -68 - Math.floor(Math.random() * 8),
@@ -167,6 +198,8 @@ export default function App() {
           rain: rainVal,
           battery: parseInt(data.battery_pct || 100),
           predictedTemp: currentData.predictedTemp || temp,
+          predictedHumidity: currentData.predictedHumidity || hum,
+          predictedPressure: currentData.predictedPressure || pres,
           rainProbability: currentData.rainProbability || (rainVal < 500 ? 90 : 10),
           predictedStatus: currentData.predictedStatus || (rainVal < 500 ? 2 : (hum > 78 ? 1 : 0)),
           rssi: parseInt(data.rssi || -70),
@@ -224,7 +257,7 @@ export default function App() {
         const getFirstNonNull = (fieldName, fallback) => {
           for (let i = 0; i < data.feeds.length; i++) {
             const val = data.feeds[i][fieldName];
-            if (val !== null && val !== undefined && val !== '') {
+            if (val !== null && val !== undefined && val !== '' && val !== 'null') {
               const num = parseFloat(val);
               if (!isNaN(num)) return num;
             }
@@ -246,37 +279,65 @@ export default function App() {
           const date = new Date(feed.created_at);
           const timeStr = `${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
           
-          let temp = (feed.field1 !== null && feed.field1 !== undefined && feed.field1 !== '') ? parseFloat(feed.field1) : null;
+          let temp = null;
+          if (feed.field1 !== null && feed.field1 !== undefined && feed.field1 !== '' && feed.field1 !== 'null') {
+            const parsed = parseFloat(feed.field1);
+            if (!isNaN(parsed)) temp = parsed;
+          }
           if (temp === null) {
             temp = temperature.length > 0 ? temperature[temperature.length - 1] : firstVal.temp;
           }
           
-          let hum = (feed.field2 !== null && feed.field2 !== undefined && feed.field2 !== '') ? parseFloat(feed.field2) : null;
+          let hum = null;
+          if (feed.field2 !== null && feed.field2 !== undefined && feed.field2 !== '' && feed.field2 !== 'null') {
+            const parsed = parseFloat(feed.field2);
+            if (!isNaN(parsed)) hum = parsed;
+          }
           if (hum === null) {
             hum = humidity.length > 0 ? humidity[humidity.length - 1] : firstVal.hum;
           }
           
-          let pres = (feed.field3 !== null && feed.field3 !== undefined && feed.field3 !== '') ? parseFloat(feed.field3) : null;
+          let pres = null;
+          if (feed.field3 !== null && feed.field3 !== undefined && feed.field3 !== '' && feed.field3 !== 'null') {
+            const parsed = parseFloat(feed.field3);
+            if (!isNaN(parsed)) pres = parsed;
+          }
           if (pres === null) {
             pres = pressure.length > 0 ? pressure[pressure.length - 1] : firstVal.pres;
           }
           
-          let rainVal = (feed.field4 !== null && feed.field4 !== undefined && feed.field4 !== '') ? parseInt(feed.field4) : null;
+          let rainVal = null;
+          if (feed.field4 !== null && feed.field4 !== undefined && feed.field4 !== '' && feed.field4 !== 'null') {
+            const parsed = parseInt(feed.field4);
+            if (!isNaN(parsed)) rainVal = parsed;
+          }
           if (rainVal === null) {
             rainVal = rain.length > 0 ? rain[rain.length - 1] : firstVal.rain;
           }
           
-          let bat = (feed.field5 !== null && feed.field5 !== undefined && feed.field5 !== '') ? parseInt(feed.field5) : null;
+          let bat = null;
+          if (feed.field5 !== null && feed.field5 !== undefined && feed.field5 !== '' && feed.field5 !== 'null') {
+            const parsed = parseInt(feed.field5);
+            if (!isNaN(parsed)) bat = parsed;
+          }
           if (bat === null) {
             bat = battery.length > 0 ? battery[battery.length - 1] : firstVal.bat;
           }
           
-          let predT = (feed.field6 !== null && feed.field6 !== undefined && feed.field6 !== '') ? parseFloat(feed.field6) : null;
+          let predT = null;
+          if (feed.field6 !== null && feed.field6 !== undefined && feed.field6 !== '' && feed.field6 !== 'null') {
+            const parsed = parseFloat(feed.field6);
+            if (!isNaN(parsed)) predT = parsed;
+          }
           if (predT === null) {
             predT = predictedTemp.length > 0 ? predictedTemp[predictedTemp.length - 1] : firstVal.predT;
           }
           
-          let rainP = (feed.field7 !== null && feed.field7 !== undefined && feed.field7 !== '') ? parseFloat(feed.field7) : null;
+          let rainP = null;
+          if (feed.field7 !== null && feed.field7 !== undefined && feed.field7 !== '' && feed.field7 !== 'null') {
+            const parsed = parseFloat(feed.field7);
+            if (!isNaN(parsed)) rainP = parsed;
+          }
           if (rainP === null) {
             rainP = rainProbability.length > 0 ? rainProbability[rainProbability.length - 1] : firstVal.rainP;
           }
@@ -308,37 +369,60 @@ export default function App() {
           predictedStatus
         });
         
-        // Find latest sensor feed
-        let latestSensorFeed = null;
-        for (let i = data.feeds.length - 1; i >= 0; i--) {
-          if (data.feeds[i].field1 !== null && data.feeds[i].field1 !== undefined && data.feeds[i].field1 !== '') {
-            latestSensorFeed = data.feeds[i];
-            break;
+        // Trích xuất giá trị mới nhất cho từng trường bằng cách quét ngược từ cuối danh sách (field-by-field backtracking)
+        const getLatestNonNull = (fieldName, fallback) => {
+          for (let i = data.feeds.length - 1; i >= 0; i--) {
+            const val = data.feeds[i][fieldName];
+            if (val !== null && val !== undefined && val !== '' && val !== 'null') {
+              const num = parseFloat(val);
+              if (!isNaN(num)) return num;
+            }
           }
-        }
-        if (!latestSensorFeed) latestSensorFeed = data.feeds[data.feeds.length - 1];
+          return fallback;
+        };
 
-        // Find latest ML forecast feed
-        let latestMLFeed = null;
-        for (let i = data.feeds.length - 1; i >= 0; i--) {
-          if (data.feeds[i].field6 !== null && data.feeds[i].field6 !== undefined && data.feeds[i].field6 !== '') {
-            latestMLFeed = data.feeds[i];
-            break;
+        const latestTemp = getLatestNonNull('field1', 28.0);
+        const latestHum = getLatestNonNull('field2', 75.0);
+        const latestPres = getLatestNonNull('field3', 1010.0);
+        const latestRain = getLatestNonNull('field4', 1023);
+        const latestBat = getLatestNonNull('field5', 100);
+        const latestPredTemp = getLatestNonNull('field6', null);
+        const latestRainProb = getLatestNonNull('field7', null);
+        const latestPredHum = getLatestNonNull('field8', null); // field8 đổi thành dự báo độ ẩm AI
+        
+        // Tính toán dự báo áp suất khí quyển vật lý qua hồi quy tuyến tính của chuỗi lịch sử nhận được
+        const getPressureSlope = (presList) => {
+          if (!presList || presList.length < 5) return 0;
+          const n = presList.length;
+          const x = Array.from({length: n}, (_, i) => i + 1);
+          let sumX = 0, sumY = 0, sumXY = 0, sumXX = 0;
+          for (let i = 0; i < n; i++) {
+            sumX += x[i];
+            sumY += presList[i];
+            sumXY += x[i] * presList[i];
+            sumXX += x[i] * x[i];
           }
-        }
-        if (!latestMLFeed) latestMLFeed = data.feeds[data.feeds.length - 1];
+          const denom = (n * sumXX) - (sumX * sumX);
+          if (denom === 0) return 0;
+          return ((n * sumXY) - (sumX * sumY)) / denom;
+        };
+
+        const presSlope = getPressureSlope(pressure);
+        const latestPredPres = latestPres !== null ? latestPres + presSlope * 5 : null;
 
         const lastUpdateDate = new Date(data.feeds[data.feeds.length - 1].created_at);
         
         setCurrentData({
-          temperature: latestSensorFeed.field1 !== null ? parseFloat(latestSensorFeed.field1) : 0,
-          humidity: latestSensorFeed.field2 !== null ? parseFloat(latestSensorFeed.field2) : 0,
-          pressure: latestSensorFeed.field3 !== null ? parseFloat(latestSensorFeed.field3) : 0,
-          rain: latestSensorFeed.field4 !== null ? parseInt(latestSensorFeed.field4) : 1023,
-          battery: latestSensorFeed.field5 !== null ? parseInt(latestSensorFeed.field5) : 100,
-          predictedTemp: latestMLFeed.field6 !== null ? parseFloat(latestMLFeed.field6) : null,
-          rainProbability: latestMLFeed.field7 !== null ? parseFloat(latestMLFeed.field7) : null,
-          predictedStatus: (latestMLFeed.field7 !== null && parseFloat(latestMLFeed.field7) > 50) ? 2 : (latestSensorFeed.field2 !== null && parseFloat(latestSensorFeed.field2) > 78 ? 1 : 0),
+          temperature: latestTemp,
+          humidity: latestHum,
+          pressure: latestPres,
+          rain: latestRain,
+          battery: latestBat,
+          predictedTemp: latestPredTemp,
+          predictedHumidity: latestPredHum,
+          predictedPressure: latestPredPres,
+          rainProbability: latestRainProb,
+          predictedStatus: (latestRainProb !== null && latestRainProb > 50) ? 2 : (latestHum > 78 ? 1 : 0),
           rssi: null,
           seqNum: null,
           lastUpdated: lastUpdateDate.toLocaleTimeString('vi-VN')
@@ -422,6 +506,7 @@ export default function App() {
         toggleModal={setIsSettingsOpen}
         isOnline={isOnline}
         connectionText={connectionText}
+        relayState={relayState}
       />
 
       {/* SIDEBAR NAVIGATION */}
@@ -465,10 +550,29 @@ export default function App() {
           <button 
             className="w-full py-2 bg-surface-container rounded-lg border border-glass-border text-on-surface hover:bg-surface-variant transition-colors font-label-caps text-xs flex items-center justify-center gap-2"
             onClick={() => {
-              const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify({currentData, historyData}, null, 2));
+              if (!historyData.timestamps || historyData.timestamps.length === 0) {
+                alert("Không có dữ liệu lịch sử để xuất file!");
+                return;
+              }
+              const headers = "Thời gian,Nhiệt độ (°C),Độ ẩm (%),Khí áp (hPa),Cảm biến mưa,Dung lượng pin (%),Dự báo nhiệt độ AI (°C),Xác suất mưa AI (%),Trạng thái AI\n";
+              const rows = historyData.timestamps.map((t, idx) => {
+                return [
+                  t,
+                  historyData.temperature[idx] !== null ? historyData.temperature[idx] : '',
+                  historyData.humidity[idx] !== null ? historyData.humidity[idx] : '',
+                  historyData.pressure[idx] !== null ? historyData.pressure[idx] : '',
+                  historyData.rain[idx] !== null ? historyData.rain[idx] : '',
+                  historyData.battery[idx] !== null ? historyData.battery[idx] : '',
+                  historyData.predictedTemp[idx] !== null ? historyData.predictedTemp[idx] : '',
+                  historyData.rainProbability[idx] !== null ? historyData.rainProbability[idx] : '',
+                  historyData.predictedStatus[idx] !== null ? historyData.predictedStatus[idx] : ''
+                ].join(',');
+              }).join('\n');
+              
+              const csvContent = "data:text/csv;charset=utf-8,\uFEFF" + encodeURIComponent(headers + rows);
               const downloadAnchor = document.createElement('a');
-              downloadAnchor.setAttribute("href", dataStr);
-              downloadAnchor.setAttribute("download", `weather_data_${Date.now()}.json`);
+              downloadAnchor.setAttribute("href", csvContent);
+              downloadAnchor.setAttribute("download", `weather_data_${Date.now()}.csv`);
               document.body.appendChild(downloadAnchor);
               downloadAnchor.click();
               downloadAnchor.remove();
@@ -529,11 +633,13 @@ export default function App() {
             <MetricCard 
               type="humidity" 
               value={currentData.humidity} 
+              predictedValue={currentData.predictedHumidity}
             />
             <MetricCard 
               type="pressure" 
               value={currentData.pressure} 
               trendText={calculatePressureTrend()}
+              predictedValue={currentData.predictedPressure}
             />
             <MetricCard 
               type="rain" 
@@ -543,7 +649,39 @@ export default function App() {
               type="battery" 
               value={currentData.battery} 
             />
-            <div className="col-span-1 md:col-span-2 mt-2">
+            
+            {/* Actuator/Relay control card */}
+            <div className="col-span-1 md:col-span-2 glass-card p-5 flex flex-col gap-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className={`w-10 h-10 rounded-full flex items-center justify-center border transition-all duration-300 ${
+                    relayState 
+                      ? 'bg-secondary-container/20 border-secondary-container text-secondary-fixed-dim shadow-[0_0_15px_rgba(0,242,255,0.4)]' 
+                      : 'bg-surface-container/50 border-glass-border text-on-surface-variant'
+                  }`}>
+                    <span className={`material-symbols-outlined text-lg ${relayState ? 'animate-spin' : ''}`}>
+                      {relayState ? 'nest_eco_leaf' : 'valve'}
+                    </span>
+                  </div>
+                  <div>
+                    <h3 className="text-xs font-bold font-label-caps uppercase text-on-surface-variant">Hệ thống máy bơm tưới</h3>
+                    <p className="font-data-mono text-[10px] text-on-surface-variant">Điều khiển D2 (Relay)</p>
+                  </div>
+                </div>
+                <button
+                  onClick={handleToggleRelay}
+                  className={`px-4 py-1.5 rounded-full text-xs font-bold transition-all duration-200 ${
+                    relayState 
+                      ? 'bg-secondary-container/20 border border-secondary-container text-secondary-fixed-dim shadow-[0_0_8px_rgba(0,242,255,0.2)]' 
+                      : 'bg-surface-container border border-glass-border text-on-surface-variant hover:text-on-surface'
+                  }`}
+                >
+                  {relayState ? 'ĐANG BẬT' : 'ĐANG TẮT'}
+                </button>
+              </div>
+            </div>
+
+            <div className="col-span-1 md:col-span-2">
               <MLPanel />
             </div>
           </div>
