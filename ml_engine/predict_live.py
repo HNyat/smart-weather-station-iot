@@ -172,11 +172,12 @@ def preprocess_and_predict(feeds, feature_cols, model_temp, model_hum, model_sta
     idx_1h = (df["created_at_dt"] - target_time_1h).abs().idxmin()
     row_1h = df.loc[idx_1h]
     
-    # Kiểm tra nếu khoảng cách thời gian vượt quá 20 phút thì dùng fallback (ví dụ index -60 hoặc dòng đầu tiên)
+    # Kiểm tra nếu khoảng cách thời gian vượt quá 20 phút thì dùng fallback (ví dụ index -6 hoặc dòng đầu tiên)
+    # Với chu kỳ gửi 10 phút/lần, 1 giờ trước tương đương bản ghi thứ 6 từ dưới lên (iloc[-6])
     time_diff_mins = abs((row_1h["created_at_dt"] - target_time_1h).total_seconds()) / 60.0
     if time_diff_mins > 20.0:
-        if len(df) >= 60:
-            row_1h = df.iloc[-60]
+        if len(df) >= 6:
+            row_1h = df.iloc[-6]
         else:
             row_1h = df.iloc[0]
         print(f"CẢNH BÁO: Không tìm thấy bản ghi lý tưởng từ 1 giờ trước. Sử dụng fallback từ timestamp {row_1h['created_at_dt']}")
@@ -189,10 +190,11 @@ def preprocess_and_predict(feeds, feature_cols, model_temp, model_hum, model_sta
     row_4h = df.loc[idx_4h]
     
     # Kiểm tra nếu khoảng cách thời gian vượt quá 40 phút thì dùng fallback
+    # Với chu kỳ gửi 10 phút/lần, 4 giờ trước tương đương bản ghi thứ 24 từ dưới lên (iloc[-24])
     time_diff_mins_4h = abs((row_4h["created_at_dt"] - target_time_4h).total_seconds()) / 60.0
     if time_diff_mins_4h > 40.0:
-        if len(df) >= 120:
-            row_4h = df.iloc[-120]
+        if len(df) >= 24:
+            row_4h = df.iloc[-24]
         else:
             row_4h = df.iloc[0]
         print(f"CẢNH BÁO: Không tìm thấy bản ghi lý tưởng từ 4 giờ trước. Sử dụng fallback từ timestamp {row_4h['created_at_dt']}")
