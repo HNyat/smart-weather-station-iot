@@ -1687,7 +1687,7 @@ const char htmlPage[] PROGMEM = R"rawliteral(
         return;
       }
       
-      let url = `https://api.thingspeak.com/channels/${config.channelId}/feeds.json?results=20`;
+      let url = `https://api.thingspeak.com/channels/${config.channelId}/feeds.json?results=80`;
       if (config.readApiKey) {
         url += `&api_key=${config.readApiKey}`;
       }
