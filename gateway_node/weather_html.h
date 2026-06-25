@@ -1,0 +1,2134 @@
+#ifndef WEATHER_HTML_H
+#define WEATHER_HTML_H
+
+const char htmlPage[] PROGMEM = R"rawliteral(
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Weather Station Pro - IoT Dashboard</title>
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <!-- Chart.js CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <style>
+    /* ==========================================================================
+       WEATHER STATION PRO - CSS STYLES (BALANCED LAYOUT)
+       ========================================================================== */
+    :root {
+      /* Color Palette */
+      --bg-primary: #080c14;
+      --bg-secondary: #0f1422;
+      --card-bg: rgba(22, 29, 49, 0.65);
+      --card-border: rgba(255, 255, 255, 0.06);
+      
+      --text-primary: #f8fafc;
+      --text-secondary: #94a3b8;
+      --text-muted: #64748b;
+      
+      --accent-temp: #f97316;
+      --accent-temp-gradient: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
+      --accent-hum: #38bdf8;
+      --accent-hum-gradient: linear-gradient(135deg, #38bdf8 0%, #0284c7 100%);
+      --accent-pres: #a855f7;
+      --accent-pres-gradient: linear-gradient(135deg, #a855f7 0%, #7e22ce 100%);
+      --accent-rain: #10b981;
+      --accent-rain-gradient: linear-gradient(135deg, #10b981 0%, #059669 100%);
+      --accent-bat: #14b8a6;
+      --accent-bat-gradient: linear-gradient(135deg, #14b8a6 0%, #0d9488 100%);
+      
+      --success: #22c55e;
+      --warning: #eab308;
+      --error: #ef4444;
+      
+      /* Fonts */
+      --font-display: 'Outfit', sans-serif;
+      --font-body: 'Plus Jakarta Sans', sans-serif;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: var(--font-body);
+      background-color: var(--bg-primary);
+      color: var(--text-primary);
+      overflow-x: hidden;
+      min-height: 100vh;
+      line-height: 1.5;
+    }
+
+    /* Background Glow Spots */
+    .bg-glow {
+      position: absolute;
+      width: 450px;
+      height: 450px;
+      border-radius: 50%;
+      filter: blur(140px);
+      z-index: -1;
+      opacity: 0.12;
+      pointer-events: none;
+    }
+
+    .circle-1 {
+      background: var(--accent-temp);
+      top: 15%;
+      left: 10%;
+    }
+
+    .circle-2 {
+      background: var(--accent-hum);
+      bottom: 15%;
+      right: 10%;
+    }
+
+    /* Container */
+    .app-container {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 24px;
+      position: relative;
+    }
+
+    /* Header */
+    .main-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 16px 24px;
+      background: rgba(15, 20, 34, 0.85);
+      border: 1px solid var(--card-border);
+      border-radius: 20px;
+      backdrop-filter: blur(16px);
+      margin-bottom: 16px;
+      box-shadow: 0 4px 30px rgba(0, 0, 0, 0.4);
+    }
+
+    .header-logo {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .logo-icon {
+      background: var(--accent-temp-gradient);
+      color: var(--text-primary);
+      padding: 8px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 4px 15px rgba(249, 115, 22, 0.35);
+    }
+
+    .logo-text h1 {
+      font-family: var(--font-display);
+      font-size: 19px;
+      font-weight: 800;
+      letter-spacing: 0.5px;
+    }
+
+    .logo-text h1 span {
+      color: var(--accent-temp);
+    }
+
+    .logo-text p {
+      font-size: 11px;
+      color: var(--text-secondary);
+    }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .connection-status {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(0, 0, 0, 0.3);
+      padding: 6px 14px;
+      border-radius: 30px;
+      border: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--text-muted);
+    }
+
+    .status-dot.online {
+      background: var(--success);
+      box-shadow: 0 0 8px var(--success);
+    }
+
+    .status-dot.offline {
+      background: var(--error);
+      box-shadow: 0 0 8px var(--error);
+    }
+
+    .status-text {
+      font-size: 11px;
+      font-weight: 600;
+    }
+
+    .mode-selector {
+      display: flex;
+      background: rgba(0, 0, 0, 0.35);
+      border-radius: 30px;
+      padding: 3px;
+      border: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .mode-btn {
+      background: transparent;
+      border: none;
+      color: var(--text-secondary);
+      padding: 5px 12px;
+      font-size: 11px;
+      font-weight: 600;
+      border-radius: 20px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .mode-btn.active {
+      background: rgba(255, 255, 255, 0.08);
+      color: var(--text-primary);
+    }
+
+    .icon-btn {
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid var(--card-border);
+      color: var(--text-primary);
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .icon-btn:hover {
+      background: rgba(255, 255, 255, 0.09);
+      transform: rotate(45deg);
+    }
+
+    /* System Meta Bar */
+    .system-meta-bar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 16px;
+      padding: 10px 20px;
+      background: rgba(15, 20, 34, 0.5);
+      border: 1px solid var(--card-border);
+      border-radius: 12px;
+      margin-bottom: 20px;
+    }
+
+    .meta-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 12px;
+    }
+
+    .meta-label {
+      color: var(--text-secondary);
+    }
+
+    .meta-value {
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .border-left {
+      border-left: 1px solid rgba(255, 255, 255, 0.08);
+      padding-left: 16px;
+    }
+
+    .flex-grow {
+      margin-left: auto;
+    }
+
+    /* FULL WIDTH HERO BANNER */
+    .hero-weather-banner {
+      position: relative;
+      background: linear-gradient(135deg, rgba(22, 29, 49, 0.9) 0%, rgba(10, 14, 26, 0.95) 100%);
+      border: 1px solid var(--card-border);
+      border-radius: 24px;
+      padding: 24px 32px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      overflow: hidden;
+      margin-bottom: 24px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+    }
+
+    .hero-banner-overlay {
+      position: absolute;
+      top: -50%;
+      right: -10%;
+      width: 400px;
+      height: 400px;
+      background: radial-gradient(circle, rgba(249, 115, 22, 0.12) 0%, transparent 70%);
+      z-index: 1;
+      pointer-events: none;
+    }
+
+    .hero-left {
+      display: flex;
+      align-items: center;
+      gap: 24px;
+      z-index: 2;
+    }
+
+    .weather-visual {
+      flex-shrink: 0;
+    }
+
+    .weather-icon-svg {
+      filter: drop-shadow(0 6px 12px rgba(245, 158, 11, 0.35));
+    }
+
+    .sun-cloud-anim {
+      animation: float 4s ease-in-out infinite;
+    }
+
+    @keyframes float {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-6px); }
+    }
+
+    .weather-info {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .weather-status-tag {
+      background: rgba(249, 115, 22, 0.12);
+      color: var(--accent-temp);
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      border: 1px solid rgba(249, 115, 22, 0.18);
+      width: max-content;
+    }
+
+    .weather-summary-text {
+      font-size: 15px;
+      color: var(--text-secondary);
+      font-weight: 500;
+    }
+
+    .hero-right {
+      display: flex;
+      align-items: center;
+      gap: 32px;
+      z-index: 2;
+    }
+
+    .main-temp-display {
+      display: flex;
+      align-items: flex-start;
+    }
+
+    .temp-number {
+      font-family: var(--font-display);
+      font-size: 64px;
+      font-weight: 800;
+      line-height: 0.9;
+      color: var(--text-primary);
+    }
+
+    .temp-unit {
+      font-family: var(--font-display);
+      font-size: 24px;
+      font-weight: 700;
+      color: var(--accent-temp);
+      margin-left: 2px;
+    }
+
+    .hero-badges {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .hero-badge {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      padding: 6px 12px;
+      border-radius: 8px;
+      font-size: 11px;
+      font-weight: 600;
+    }
+
+    .badge-icon {
+      font-size: 12px;
+    }
+
+    .badge-label {
+      color: var(--text-secondary);
+    }
+
+    .badge-value {
+      color: var(--text-primary);
+      font-weight: 700;
+    }
+
+    /* Balanced 2-Column Grid Layout */
+    .balanced-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+    }
+
+    @media (max-width: 1024px) {
+      .balanced-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    /* Glass Card */
+    .glass-card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 24px;
+      backdrop-filter: blur(12px);
+      padding: 24px;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+      transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275), border-color 0.2s, box-shadow 0.3s;
+    }
+
+    .glass-card:hover {
+      transform: translateY(-4px);
+      border-color: rgba(255, 255, 255, 0.12);
+      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.35);
+    }
+
+    /* Columns */
+    .grid-column {
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+    }
+
+    /* Left Column Elements */
+    /* Params Grid (2x2 Balanced) */
+    .params-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 16px;
+    }
+
+    @media (max-width: 480px) {
+      .params-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .param-card {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      height: 100%;
+    }
+
+    .card-icon {
+      width: 42px;
+      height: 42px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .hum-theme .card-icon { background: rgba(56, 189, 248, 0.08); color: var(--accent-hum); }
+    .pres-theme .card-icon { background: rgba(168, 85, 247, 0.08); color: var(--accent-pres); }
+    .rain-theme .card-icon { background: rgba(16, 185, 129, 0.08); color: var(--accent-rain); }
+    .bat-theme .card-icon { background: rgba(20, 184, 166, 0.08); color: var(--accent-bat); }
+
+    .card-info h3 {
+      font-size: 13px;
+      color: var(--text-secondary);
+      font-weight: 500;
+      margin-bottom: 2px;
+    }
+
+    .card-value {
+      font-family: var(--font-display);
+      font-size: 28px;
+      font-weight: 700;
+      line-height: 1.1;
+    }
+
+    .card-value .unit {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      margin-left: 2px;
+    }
+
+    .card-subtext {
+      font-size: 10px;
+      color: var(--text-secondary);
+      font-weight: 600;
+      background: rgba(255, 255, 255, 0.04);
+      padding: 3px 8px;
+      border-radius: 6px;
+      border: 1px solid rgba(255, 255, 255, 0.03);
+      display: inline-block;
+      width: max-content;
+    }
+
+    .progress-bar-container {
+      height: 5px;
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 10px;
+      overflow: hidden;
+      margin-top: 4px;
+    }
+
+    .progress-bar {
+      height: 100%;
+      background: var(--accent-hum-gradient);
+      border-radius: 10px;
+      transition: width 0.8s ease;
+    }
+
+    .pressure-badge {
+      display: inline-block;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 9px;
+      font-weight: 700;
+      background: rgba(168, 85, 247, 0.12);
+      color: var(--accent-pres);
+      border: 1px solid rgba(168, 85, 247, 0.18);
+    }
+
+    .rain-status-text {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--accent-rain);
+    }
+
+    .battery-battery-bar {
+      height: 7px;
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 4px;
+      padding: 1px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      margin-top: 4px;
+    }
+
+    .battery-fill {
+      height: 100%;
+      background: var(--accent-bat-gradient);
+      border-radius: 2px;
+      transition: width 0.8s ease;
+    }
+
+    /* Forecast Card */
+    .forecast-card .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    .forecast-card h2 {
+      font-family: var(--font-display);
+      font-size: 16px;
+      font-weight: 700;
+    }
+
+    .forecast-grid {
+      display: grid;
+      grid-template-columns: 1.15fr 1fr;
+      gap: 16px;
+      margin-bottom: 12px;
+    }
+
+    @media (max-width: 600px) {
+      .forecast-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .prediction-box {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .pred-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: rgba(0, 0, 0, 0.2);
+      padding: 8px 12px;
+      border-radius: 10px;
+      border: 1px solid rgba(255, 255, 255, 0.03);
+    }
+
+    .pred-label {
+      font-size: 11px;
+      color: var(--text-secondary);
+    }
+
+    .pred-val {
+      font-family: var(--font-display);
+      font-size: 14px;
+      font-weight: 700;
+    }
+
+    .pred-trend {
+      font-size: 10px;
+      font-weight: 700;
+      padding: 1px 6px;
+      border-radius: 4px;
+    }
+
+    .trend-up { background: rgba(239, 68, 68, 0.1); color: var(--error); }
+    .trend-down { background: rgba(56, 189, 248, 0.1); color: var(--accent-hum); }
+    .trend-stable { background: rgba(16, 185, 129, 0.1); color: var(--accent-rain); }
+
+    .regression-math-box {
+      background: rgba(0, 0, 0, 0.25);
+      border: 1px solid rgba(255, 255, 255, 0.04);
+      border-radius: 14px;
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      gap: 4px;
+    }
+
+    .regression-math-box h3 {
+      font-size: 10px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      margin-bottom: 4px;
+      letter-spacing: 0.5px;
+    }
+
+    .math-formula {
+      font-family: 'Courier New', Courier, monospace;
+      font-size: 11px;
+      color: var(--warning);
+      line-height: 1.5;
+    }
+
+    .card-divider {
+      border: none;
+      border-top: 1px solid rgba(255, 255, 255, 0.05);
+      margin: 12px 0;
+    }
+
+    .recommendation-box {
+      display: flex;
+      gap: 12px;
+      background: rgba(234, 179, 8, 0.05);
+      border: 1px solid rgba(234, 179, 8, 0.12);
+      padding: 12px;
+      border-radius: 14px;
+    }
+
+    .rec-icon {
+      font-size: 18px;
+      flex-shrink: 0;
+    }
+
+    .rec-content h4 {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--warning);
+      margin-bottom: 2px;
+    }
+
+    .rec-content p {
+      font-size: 11px;
+      color: var(--text-secondary);
+      line-height: 1.5;
+    }
+
+    /* Right Column Elements */
+    .chart-container-card {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .chart-header h2 {
+      font-family: var(--font-display);
+      font-size: 18px;
+      font-weight: 700;
+    }
+
+    .chart-tabs-wrapper {
+      overflow-x: auto;
+      max-width: 100%;
+      padding-bottom: 4px;
+      margin-top: 8px;
+    }
+
+    .chart-tabs {
+      display: flex;
+      background: rgba(0, 0, 0, 0.25);
+      border-radius: 30px;
+      padding: 3px;
+      gap: 2px;
+      min-width: max-content;
+    }
+
+    .chart-tab {
+      border: none;
+      background: transparent;
+      color: var(--text-secondary);
+      padding: 5px 12px;
+      font-size: 11px;
+      font-weight: 600;
+      border-radius: 20px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      white-space: nowrap;
+    }
+
+    .chart-tab.active {
+      background: var(--accent-temp-gradient);
+      color: var(--text-primary);
+      box-shadow: 0 3px 8px rgba(249, 115, 22, 0.25);
+    }
+
+    .chart-wrapper {
+      position: relative;
+      height: 260px;
+      width: 100%;
+    }
+
+    /* MATLAB Visualizations Card */
+    .matlab-chart-card {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .matlab-chart-card h2 {
+      font-family: var(--font-display);
+      font-size: 17px;
+      font-weight: 700;
+    }
+
+    .matlab-iframe-container {
+      position: relative;
+      width: 100%;
+      height: 290px;
+      border-radius: 16px;
+      overflow: hidden;
+      background: rgba(0, 0, 0, 0.25);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .matlab-iframe-container iframe {
+      width: 100%;
+      height: 100%;
+      border: none;
+    }
+
+    .matlab-placeholder {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+      color: var(--text-secondary);
+      text-align: center;
+      padding: 24px;
+    }
+
+    .matlab-placeholder p {
+      font-size: 12px;
+      margin-bottom: 12px;
+      color: var(--text-secondary);
+    }
+
+    /* Modals */
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(8, 12, 20, 0.85);
+      backdrop-filter: blur(8px);
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s ease;
+    }
+
+    .modal-overlay.active {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .modal-card {
+      width: 90%;
+      max-width: 460px;
+      background: var(--bg-secondary);
+      border: 1px solid var(--card-border);
+      border-radius: 24px;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6);
+      overflow: hidden;
+      transform: translateY(20px);
+      transition: transform 0.3s ease;
+    }
+
+    .modal-overlay.active .modal-card {
+      transform: translateY(0);
+    }
+
+    .modal-header {
+      padding: 16px 24px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .modal-header h2 {
+      font-family: var(--font-display);
+      font-size: 17px;
+      font-weight: 700;
+    }
+
+    .close-btn {
+      background: transparent;
+      border: none;
+      color: var(--text-secondary);
+      font-size: 24px;
+      cursor: pointer;
+      transition: color 0.2s;
+    }
+
+    .close-btn:hover {
+      color: var(--text-primary);
+    }
+
+    .modal-body {
+      padding: 20px 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .form-group label {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-secondary);
+    }
+
+    .form-group input {
+      background: rgba(0, 0, 0, 0.25);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      padding: 8px 12px;
+      border-radius: 8px;
+      color: var(--text-primary);
+      font-family: var(--font-body);
+      font-size: 13px;
+      transition: border-color 0.2s;
+    }
+
+    .form-group input:focus {
+      outline: none;
+      border-color: var(--accent-temp);
+    }
+
+    .form-group small {
+      font-size: 10px;
+      color: var(--text-muted);
+    }
+
+    .modal-actions {
+      display: flex;
+      gap: 12px;
+      margin-top: 8px;
+    }
+
+    .btn {
+      border: none;
+      padding: 10px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .btn-primary {
+      background: var(--accent-temp-gradient);
+      color: var(--text-primary);
+    }
+
+    .btn-primary:hover {
+      background: linear-gradient(135deg, #ea580c 0%, #d97706 100%);
+    }
+
+    .btn-secondary {
+      background: rgba(255, 255, 255, 0.04);
+      color: var(--text-primary);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .btn-secondary:hover {
+      background: rgba(255, 255, 255, 0.08);
+    }
+
+    /* Alert Box */
+    .alert-banner {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--error);
+      color: white;
+      padding: 12px 24px;
+      border-radius: 30px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      box-shadow: 0 8px 25px rgba(239, 68, 68, 0.4);
+      font-weight: 700;
+      font-size: 13px;
+      z-index: 1000;
+      animation: slide-up 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      backdrop-filter: blur(10px);
+    }
+
+    .alert-banner.hidden {
+      display: none;
+    }
+
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+    ::-webkit-scrollbar-track {
+      background: var(--bg-primary);
+    }
+    ::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: rgba(255, 255, 255, 0.2);
+    }
+
+    /* Hide scrollbar for tabs */
+    .chart-tabs-wrapper::-webkit-scrollbar {
+      display: none;
+    }
+    .chart-tabs-wrapper {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+
+    /* Hover glows for cards */
+    .hum-theme:hover { border-color: rgba(56, 189, 248, 0.3) !important; box-shadow: 0 12px 35px rgba(56, 189, 248, 0.12) !important; }
+    .pres-theme:hover { border-color: rgba(168, 85, 247, 0.3) !important; box-shadow: 0 12px 35px rgba(168, 85, 247, 0.12) !important; }
+    .rain-theme:hover { border-color: rgba(16, 185, 129, 0.3) !important; box-shadow: 0 12px 35px rgba(16, 185, 129, 0.12) !important; }
+    .bat-theme:hover { border-color: rgba(20, 184, 166, 0.3) !important; box-shadow: 0 12px 35px rgba(20, 184, 166, 0.12) !important; }
+    .chart-container-card:hover { border-color: rgba(249, 115, 22, 0.3) !important; box-shadow: 0 12px 35px rgba(249, 115, 22, 0.12) !important; }
+    .matlab-chart-card:hover { border-color: rgba(56, 189, 248, 0.3) !important; box-shadow: 0 12px 35px rgba(56, 189, 248, 0.12) !important; }
+    .forecast-card:hover { border-color: rgba(234, 179, 8, 0.3) !important; box-shadow: 0 12px 35px rgba(234, 179, 8, 0.12) !important; }
+    .hero-weather-banner:hover { border-color: rgba(249, 115, 22, 0.3); box-shadow: 0 12px 40px rgba(249, 115, 22, 0.12); }
+  </style>
+</head>
+<body>
+  <!-- GLOBAL SVG GRADIENTS -->
+  <svg width="0" height="0" style="position: absolute; pointer-events: none;">
+    <defs>
+      <linearGradient id="sunGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stop-color="#fbbf24" />
+        <stop offset="100%" stop-color="#f59e0b" />
+      </linearGradient>
+      <linearGradient id="cloudGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stop-color="#e2e8f0" />
+        <stop offset="100%" stop-color="#94a3b8" />
+      </linearGradient>
+      <linearGradient id="cloudGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stop-color="#94a3b8" />
+        <stop offset="100%" stop-color="#475569" />
+      </linearGradient>
+    </defs>
+  </svg>
+
+  <div class="app-container">
+    <!-- BACKGROUND DECORATIONS -->
+    <div class="bg-glow circle-1"></div>
+    <div class="bg-glow circle-2"></div>
+
+    <!-- HEADER -->
+    <header class="main-header">
+      <div class="header-logo">
+        <div class="logo-icon">
+          <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2.5">
+            <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41" stroke-linecap="round"/>
+            <circle cx="12" cy="12" r="4" fill="currentColor"/>
+          </svg>
+        </div>
+        <div class="logo-text">
+          <h1>WEATHER <span>STATION</span></h1>
+          <p>Hệ thống giám sát cây trồng & Hỗ trợ canh tác thông minh</p>
+        </div>
+      </div>
+      
+      <div class="header-actions">
+        <div class="connection-status">
+          <span class="status-dot online" id="statusDot"></span>
+          <span class="status-text" id="statusText">Đang kết nối...</span>
+        </div>
+        <div class="mode-selector">
+          <button class="mode-btn active" id="btnCloud" onclick="setDataSource('cloud')">Cloud (ThingSpeak)</button>
+          <button class="mode-btn" id="btnLocal" onclick="setDataSource('local')">Local (ESP8266)</button>
+        </div>
+        <button class="icon-btn" id="btnSettings" onclick="toggleModal('settingsModal', true)" title="Cấu hình hệ thống">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="3"></circle>
+            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+          </svg>
+        </button>
+      </div>
+    </header>
+
+    <!-- SYSTEM META BAR -->
+    <div class="system-meta-bar">
+      <div class="meta-item">
+        <span class="meta-label">LoRa RSSI:</span>
+        <span class="meta-value" id="rssiValue">-- dBm</span>
+      </div>
+      <div class="meta-item border-left">
+        <span class="meta-label">Mã Gói (Seq):</span>
+        <span class="meta-value" id="seqNum">--</span>
+      </div>
+      <div class="meta-item border-left">
+        <span class="meta-label">Cập nhật lần cuối:</span>
+        <span class="meta-value" id="lastUpdated">--</span>
+      </div>
+      <div class="meta-item border-left flex-grow">
+        <span class="meta-label">Nguồn cấp:</span>
+        <span class="meta-value" id="stationModeText">ThingSpeak Channel</span>
+      </div>
+    </div>
+
+    <!-- FULL WIDTH HIGH-IMPACT HERO BANNER -->
+    <section class="hero-weather-banner">
+      <div class="hero-banner-overlay"></div>
+      <div class="hero-left">
+        <div class="weather-visual">
+          <div id="weatherIconContainer">
+            <svg viewBox="0 0 64 64" width="80" height="80" class="weather-icon-svg sun-cloud-anim">
+              <circle cx="24" cy="24" r="12" fill="url(#sunGradient)"/>
+              <path d="M46 38a10 10 0 0 0-9-6 10.5 10.5 0 0 0-4 .8A12 12 0 1 0 22 50h24a10 10 0 0 0 0-20z" fill="url(#cloudGradient)" opacity="0.95"/>
+            </svg>
+          </div>
+        </div>
+        <div class="weather-info">
+          <span class="weather-status-tag" id="weatherStatusTag">Khí tượng canh tác</span>
+          <div class="weather-summary-text" id="weatherSummary">Đang lấy dữ liệu cảm biến...</div>
+        </div>
+      </div>
+
+      <div class="hero-right">
+        <div class="main-temp-display">
+          <span class="temp-number" id="mainTemp">--</span>
+          <span class="temp-unit">°C</span>
+        </div>
+        <div class="hero-badges">
+          <div class="hero-badge">
+            <span class="badge-icon">🤖</span>
+            <span class="badge-label">Python AI dự báo:</span>
+            <span class="badge-value" id="subTemp">-- °C</span>
+          </div>
+          <div class="hero-badge">
+            <span class="badge-icon">⛈️</span>
+            <span class="badge-label">Xác suất mưa:</span>
+            <span class="badge-value" id="subRain">--%</span>
+          </div>
+          <div class="hero-badge">
+            <span class="badge-icon" id="aiStatusIcon">🤖</span>
+            <span class="badge-label">Dự kiến (+1h):</span>
+            <span class="badge-value" id="aiStatusText">Đang tính...</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SYMMETRICAL 2-COLUMN LOWER GRID -->
+    <div class="balanced-grid">
+      <!-- LEFT COLUMN: SENSOR METRICS & MATLAB CLOUD CHARTS -->
+      <div class="grid-column">
+        
+        <!-- 2x2 PARAMETERS GRID -->
+        <div class="params-grid">
+          <!-- HUMIDITY CARD -->
+          <div class="param-card glass-card hum-theme">
+            <div class="card-icon">
+              <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/>
+              </svg>
+            </div>
+            <div class="card-info">
+              <h3>Độ Ẩm Không Khí</h3>
+              <div class="card-value"><span id="valHumidity">--</span><span class="unit">%</span></div>
+              <div class="progress-bar-container">
+                <div class="progress-bar" id="barHumidity" style="width: 0%"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- PRESSURE CARD -->
+          <div class="param-card glass-card pres-theme">
+            <div class="card-icon">
+              <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="18" y1="20" x2="18" y2="10"></line>
+                <line x1="12" y1="20" x2="12" y2="4"></line>
+                <line x1="6" y1="20" x2="6" y2="14"></line>
+              </svg>
+            </div>
+            <div class="card-info">
+              <h3>Áp Suất Khí Quyển</h3>
+              <div class="card-value"><span id="valPressure">--</span><span class="unit">hPa</span></div>
+              <div class="card-subtext" id="subPressure">Trend: --</div>
+              <div style="margin-top: 4px;"><span class="pressure-badge" id="badgePressure">--</span></div>
+            </div>
+          </div>
+
+          <!-- RAIN SENSOR CARD -->
+          <div class="param-card glass-card rain-theme">
+            <div class="card-icon">
+              <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M20 17.58A5 5 0 0 0 18 8h-1.26A8 8 0 1 0 4 16.25"/>
+                <line x1="8" y1="16" x2="8" y2="22"></line>
+                <line x1="12" y1="18" x2="12" y2="22"></line>
+                <line x1="16" y1="16" x2="16" y2="22"></line>
+              </svg>
+            </div>
+            <div class="card-info">
+              <h3>Lượng Mưa & Tưới Tiêu</h3>
+              <div class="card-value"><span id="valRain">--</span><span class="unit">/1023</span></div>
+              <span class="rain-status-text" id="statusRain">Đang đọc...</span>
+            </div>
+          </div>
+
+          <!-- BATTERY CARD -->
+          <div class="param-card glass-card bat-theme">
+            <div class="card-icon">
+              <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="2" y="7" width="16" height="10" rx="2" ry="2"></rect>
+                <line x1="22" y1="11" x2="22" y2="13"></line>
+              </svg>
+            </div>
+            <div class="card-info">
+              <h3>Pin Trạm Khí Tượng</h3>
+              <div class="card-value"><span id="valBattery">--</span><span class="unit">%</span></div>
+              <div class="battery-battery-bar">
+                <div class="battery-fill" id="barBattery" style="width: 0%"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- PYTHON ML FORECAST CARD -->
+        <div class="glass-card matlab-chart-card">
+          <div class="card-header">
+            <div class="header-title">
+              <span class="spark-icon">🤖</span>
+              <h2>Mô Hình Học Máy Python AI</h2>
+            </div>
+            <span class="engine-badge" style="background: rgba(16, 185, 129, 0.12); color: var(--accent-rain); border-color: rgba(16, 185, 129, 0.2)">Random Forest</span>
+          </div>
+          <div class="ml-metrics-container" style="padding: 12px; background: rgba(0, 0, 0, 0.2); border-radius: 16px; border: 1px solid rgba(255, 255, 255, 0.05); height: 290px; display: flex; flex-direction: column; justify-content: center; gap: 14px;">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+              <div style="background: rgba(255,255,255,0.03); padding: 12px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.02); text-align: center;">
+                <div style="font-size: 10px; color: var(--text-secondary); margin-bottom: 4px;">Sai số Nhiệt độ (MAE)</div>
+                <div style="font-size: 18px; font-weight: 700; color: var(--accent-temp);">±0.45 °C</div>
+              </div>
+              <div style="background: rgba(255,255,255,0.03); padding: 12px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.02); text-align: center;">
+                <div style="font-size: 10px; color: var(--text-secondary); margin-bottom: 4px;">Độ chính xác AI (Acc)</div>
+                <div style="font-size: 18px; font-weight: 700; color: var(--accent-rain);">95.2%</div>
+              </div>
+            </div>
+            <div style="font-size: 12px; color: var(--text-secondary); line-height: 1.5; padding: 0 4px;">
+              <p>🤖 <b>Mô hình dự báo:</b> Sử dụng thuật toán Random Forest hồi quy (cho Temp/Hum) và phân loại (cho Weather Code) để dự đoán chu kỳ tiếp theo.</p>
+              <p style="margin-top: 8px;">📍 <b>Cập nhật:</b> Chạy tự động mỗi 30 phút qua GitHub Actions và đẩy dữ liệu lên ThingSpeak Cloud.</p>
+            </div>
+            <div style="display: flex; gap: 8px; flex-wrap: wrap; padding: 0 4px;">
+              <span style="font-size: 10px; padding: 4px 8px; background: rgba(249, 115, 22, 0.1); color: var(--accent-temp); border: 1px solid rgba(249, 115, 22, 0.2); border-radius: 6px;">RF Regressors</span>
+              <span style="font-size: 10px; padding: 4px 8px; background: rgba(168, 85, 247, 0.1); color: var(--accent-pres); border: 1px solid rgba(168, 85, 247, 0.2); border-radius: 6px;">RF Classifier</span>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- RIGHT COLUMN: HISTORICAL CHARTS & LOCAL AI FORECAST -->
+      <div class="grid-column">
+        
+        <!-- CHART.JS CARD -->
+        <div class="glass-card chart-container-card">
+          <div class="chart-header">
+            <h2>Biểu Đồ Khí Hậu Canh Tác (8 Kênh)</h2>
+            <div class="chart-tabs-wrapper">
+              <div class="chart-tabs">
+                <button class="chart-tab active" onclick="switchChart('temp')">Nhiệt Độ Canh Tác</button>
+                <button class="chart-tab" onclick="switchChart('hum')">Độ Ẩm Đất/Khí</button>
+                <button class="chart-tab" onclick="switchChart('pres')">Khí Áp Canh Tác</button>
+                <button class="chart-tab" onclick="switchChart('rain')">Lượng Mưa</button>
+                <button class="chart-tab" onclick="switchChart('bat')">Nguồn Điện (Pin)</button>
+              </div>
+            </div>
+          </div>
+          <div class="chart-wrapper">
+            <canvas id="weatherHistoryChart"></canvas>
+          </div>
+        </div>
+
+        <!-- LOCAL LINEAR REGRESSION AI ENGINE -->
+        <div class="glass-card forecast-card">
+          <div class="card-header">
+            <div class="header-title">
+              <div class="spark-icon">⚡</div>
+              <h2>Dự Báo Cây Trồng AI Cục Bộ (Hồi Quy)</h2>
+            </div>
+            <span class="engine-badge">JS Engine v1.0</span>
+          </div>
+          
+          <div class="forecast-grid">
+            <div class="prediction-box">
+              <div class="pred-item">
+                <span class="pred-label">Nhiệt độ dự tính (+1h)</span>
+                <span class="pred-val" id="predTemp">-- °C</span>
+                <span class="pred-trend" id="trendTemp">--</span>
+              </div>
+              <div class="pred-item">
+                <span class="pred-label">Độ ẩm dự tính (+1h)</span>
+                <span class="pred-val" id="predHum">-- %</span>
+                <span class="pred-trend" id="trendHum">--</span>
+              </div>
+              <div class="pred-item">
+                <span class="pred-label">Áp suất dự tính (+1h)</span>
+                <span class="pred-val" id="predPres">-- hPa</span>
+                <span class="pred-trend" id="trendPres">--</span>
+              </div>
+            </div>
+
+            <div class="regression-math-box">
+              <h3>Phương trình xu hướng canh tác:</h3>
+              <div class="math-formula" id="mathTemp">T(t) = -- * t + --</div>
+              <div class="math-formula" id="mathHum">H(t) = -- * t + --</div>
+              <div class="math-formula" id="mathPres">P(t) = -- * t + --</div>
+            </div>
+          </div>
+
+          <hr class="card-divider">
+
+          <div class="recommendation-box">
+            <div class="rec-icon">💡</div>
+            <div class="rec-content">
+              <h4>💡 Khuyên dùng cho canh tác & tưới tiêu:</h4>
+              <p id="systemRecommendation">Đang tính toán mô hình hồi quy dựa trên dữ liệu khí quyển...</p>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- SETTINGS MODAL -->
+    <div class="modal-overlay" id="settingsModal">
+      <div class="modal-card">
+        <div class="modal-header">
+          <h2>Cấu Hình Hệ Thống</h2>
+          <button class="close-btn" onclick="toggleModal('settingsModal', false)">&times;</button>
+        </div>
+        <div class="modal-body">
+          <div class="form-group">
+            <label for="inputChannelId">ThingSpeak Channel ID</label>
+            <input type="text" id="inputChannelId" placeholder="Ví dụ: 12397">
+            <small>ID của kênh ThingSpeak lưu dữ liệu trạm thời tiết của bạn.</small>
+          </div>
+          
+          <div class="form-group">
+            <label for="inputReadApiKey">ThingSpeak Read API Key</label>
+            <input type="password" id="inputReadApiKey" placeholder="Nhập Read API Key (nếu Private)">
+            <small>Cần thiết để tải 8 biểu đồ dữ liệu và chạy phân tích.</small>
+          </div>
+
+          <div class="form-group">
+            <label for="inputMatlabId">MATLAB Visualization ID</label>
+            <input type="text" id="inputMatlabId" placeholder="Nhập ID App Visualizations (ví dụ: 45678)">
+            <small>ID của MATLAB Visualizations App để nhúng biểu đồ so sánh từ Cloud.</small>
+          </div>
+
+          <div class="form-group">
+            <label for="inputEspIp">ESP8266 Local Gateway IP</label>
+            <input type="text" id="inputEspIp" placeholder="Mặc định: 192.168.4.1">
+            <small>Địa chỉ IP của ESP8266 khi kết nối trực tiếp vào WiFi AP "WeatherStation".</small>
+          </div>
+          
+          <div class="modal-actions">
+            <button class="btn btn-secondary" onclick="resetToDemoSettings()">Khôi phục Demo</button>
+            <button class="btn btn-primary" onclick="saveSettings()">Lưu Cấu Hình</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ALERT OVERLAYS -->
+    <div class="alert-banner hidden" id="alertBox">
+      <span class="alert-icon">⚠</span>
+      <span class="alert-message" id="alertMessage">Cảnh báo: Phát hiện mưa lớn! Khả năng có dông bão nguy hiểm.</span>
+    </div>
+  </div>
+
+  <!-- JavaScript Client Core -->
+  <script>
+    // ==========================================================================
+    // WEATHER STATION PRO - CLIENT JAVASCRIPT
+    // ==========================================================================
+
+    // --- Cấu hình & Trạng thái mặc định ---
+    let config = {
+      channelId: '3413241',        // ID kênh mặc định của bạn
+      readApiKey: 'VISWQT7BABDVZOFS', // Read API Key mặc định của bạn
+      matlabId: '674169',          // MATLAB Visualization ID mặc định của bạn (Không dùng)
+      espIp: '192.168.4.1',        // IP mặc định của Gateway ESP8266 AP
+      dataSource: 'cloud'          // Nguồn dữ liệu: 'cloud' (ThingSpeak) hoặc 'local' (ESP8266)
+    };
+
+    // --- Dữ liệu hiện tại ---
+    let currentData = {
+      temperature: 0,
+      humidity: 0,
+      pressure: 0,
+      rain: 1023,
+      battery: 100,
+      predictedTemp: null,         // field6 (Python AI dự báo nhiệt độ)
+      rainProbability: null,       // field7 (Python AI xác suất mưa %)
+      predictedStatus: null,       // field8 (Python AI mã trạng thái thời tiết 0-2)
+      rssi: -70,
+      seqNum: 0,
+      lastUpdated: null
+    };
+
+    // --- Bộ nhớ lịch sử (cho biểu đồ và hồi quy) ---
+    let historyData = {
+      timestamps: [],
+      temperature: [],             // field1
+      humidity: [],                // field2
+      pressure: [],                // field3
+      rain: [],                    // field4
+      battery: [],                 // field5
+      predictedTemp: [],           // field6
+      rainProbability: [],         // field7
+      predictedStatus: []          // field8
+    };
+
+    let weatherChart = null;
+    let activeChartTab = 'temp';   // 'temp', 'hum', 'pres', 'rain', 'bat'
+    let fetchInterval = null;
+
+    // KHỞI CHẠY TRANG
+    document.addEventListener("DOMContentLoaded", () => {
+      loadConfig();
+      initChart();
+      startDataFetching();
+      refreshData();
+    });
+
+    // Load config từ localStorage
+    function loadConfig() {
+      const savedConfig = localStorage.getItem('weather_dashboard_config');
+      if (savedConfig) {
+        config = JSON.parse(savedConfig);
+      }
+      
+      // Điền vào form settings
+      document.getElementById('inputChannelId').value = config.channelId || '';
+      document.getElementById('inputReadApiKey').value = config.readApiKey || '';
+      document.getElementById('inputMatlabId').value = config.matlabId || '';
+      document.getElementById('inputEspIp').value = config.espIp || '192.168.4.1';
+      
+      updateSourceButtons();
+    }
+
+    // Lưu cấu hình
+    function saveSettings() {
+      config.channelId = document.getElementById('inputChannelId').value.trim();
+      config.readApiKey = document.getElementById('inputReadApiKey').value.trim();
+      config.matlabId = document.getElementById('inputMatlabId').value.trim();
+      config.espIp = document.getElementById('inputEspIp').value.trim() || '192.168.4.1';
+      
+      localStorage.setItem('weather_dashboard_config', JSON.stringify(config));
+      toggleModal('settingsModal', false);
+      
+      startDataFetching();
+      refreshData();
+    }
+
+    // Reset cấu hình về kênh mặc định của bạn
+    function resetToDemoSettings() {
+      document.getElementById('inputChannelId').value = '3413241';
+      document.getElementById('inputReadApiKey').value = 'VISWQT7BABDVZOFS';
+      document.getElementById('inputMatlabId').value = '674169';
+      document.getElementById('inputEspIp').value = '192.168.4.1';
+    }
+
+    function updateSourceButtons() {
+      const btnCloud = document.getElementById('btnCloud');
+      const btnLocal = document.getElementById('btnLocal');
+      const stationModeText = document.getElementById('stationModeText');
+      
+      if (config.dataSource === 'cloud') {
+        btnCloud.classList.add('active');
+        btnLocal.classList.remove('active');
+        stationModeText.innerText = `ThingSpeak Channel: ${config.channelId}`;
+      } else {
+        btnCloud.classList.remove('active');
+        btnLocal.classList.add('active');
+        stationModeText.innerText = `ESP8266 Local Server: http://${config.espIp}`;
+      }
+    }
+
+    function setDataSource(source) {
+      if (config.dataSource !== source) {
+        config.dataSource = source;
+        localStorage.setItem('weather_dashboard_config', JSON.stringify(config));
+        updateSourceButtons();
+        startDataFetching();
+        refreshData();
+      }
+    }
+
+    function toggleModal(modalId, show) {
+      const modal = document.getElementById(modalId);
+      if (show) {
+        modal.classList.add('active');
+      } else {
+        modal.classList.remove('active');
+      }
+    }
+
+    // KHỞI TẠO BIỂU ĐỒ (CHART.JS)
+    function initChart() {
+      const ctx = document.getElementById('weatherHistoryChart').getContext('2d');
+      
+      const chartGradients = {
+        temp: ctx.createLinearGradient(0, 0, 0, 250),
+        hum: ctx.createLinearGradient(0, 0, 0, 250),
+        pres: ctx.createLinearGradient(0, 0, 0, 250),
+        rain: ctx.createLinearGradient(0, 0, 0, 250),
+        bat: ctx.createLinearGradient(0, 0, 0, 250)
+      };
+      chartGradients.temp.addColorStop(0, 'rgba(249, 115, 22, 0.3)');
+      chartGradients.temp.addColorStop(1, 'rgba(249, 115, 22, 0.0)');
+      
+      chartGradients.hum.addColorStop(0, 'rgba(56, 189, 248, 0.3)');
+      chartGradients.hum.addColorStop(1, 'rgba(56, 189, 248, 0.0)');
+      
+      chartGradients.pres.addColorStop(0, 'rgba(168, 85, 247, 0.3)');
+      chartGradients.pres.addColorStop(1, 'rgba(168, 85, 247, 0.0)');
+
+      chartGradients.rain.addColorStop(0, 'rgba(16, 185, 129, 0.3)');
+      chartGradients.rain.addColorStop(1, 'rgba(16, 185, 129, 0.0)');
+
+      chartGradients.bat.addColorStop(0, 'rgba(20, 184, 166, 0.3)');
+      chartGradients.bat.addColorStop(1, 'rgba(20, 184, 166, 0.0)');
+
+      const chartConfigs = {
+        type: 'line',
+        data: {
+          labels: [],
+          datasets: [
+            {
+              label: 'Thực tế',
+              data: [],
+              borderColor: '#f97316',
+              backgroundColor: chartGradients.temp,
+              fill: true,
+              tension: 0.4,
+              borderWidth: 3,
+              pointBackgroundColor: '#f97316',
+              pointHoverRadius: 6
+            },
+            {
+              label: 'Dự đoán (MATLAB)',
+              data: [],
+              borderColor: '#eab308',
+              borderDash: [4, 4],
+              fill: false,
+              tension: 0.4,
+              borderWidth: 2,
+              pointBackgroundColor: '#eab308'
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { 
+              display: true,
+              labels: { color: '#94a3b8', font: { family: 'Plus Jakarta Sans', size: 10 } }
+            }
+          },
+          scales: {
+            x: {
+              grid: { color: 'rgba(255, 255, 255, 0.05)' },
+              ticks: { color: '#94a3b8', font: { family: 'Plus Jakarta Sans', size: 10 } }
+            },
+            y: {
+              grid: { color: 'rgba(255, 255, 255, 0.05)' },
+              ticks: { color: '#94a3b8', font: { family: 'Plus Jakarta Sans', size: 11 } }
+            }
+          }
+        }
+      };
+      
+      weatherChart = new Chart(ctx, chartConfigs);
+    }
+
+    function switchChart(tabName) {
+      activeChartTab = tabName;
+      
+      const tabs = document.querySelectorAll('.chart-tab');
+      tabs.forEach(tab => {
+        if (tab.getAttribute('onclick').includes(tabName)) {
+          tab.classList.add('active');
+        } else {
+          tab.classList.remove('active');
+        }
+      });
+      
+      updateChartData();
+    }
+
+    function updateChartData() {
+      if (!weatherChart || historyData.timestamps.length === 0) return;
+      
+      const ctx = document.getElementById('weatherHistoryChart').getContext('2d');
+      const gradTemp = ctx.createLinearGradient(0, 0, 0, 250);
+      gradTemp.addColorStop(0, 'rgba(249, 115, 22, 0.25)');
+      gradTemp.addColorStop(1, 'rgba(249, 115, 22, 0.0)');
+
+      const gradHum = ctx.createLinearGradient(0, 0, 0, 250);
+      gradHum.addColorStop(0, 'rgba(56, 189, 248, 0.25)');
+      gradHum.addColorStop(1, 'rgba(56, 189, 248, 0.0)');
+
+      const gradPres = ctx.createLinearGradient(0, 0, 0, 250);
+      gradPres.addColorStop(0, 'rgba(168, 85, 247, 0.25)');
+      gradPres.addColorStop(1, 'rgba(168, 85, 247, 0.0)');
+
+      const gradRain = ctx.createLinearGradient(0, 0, 0, 250);
+      gradRain.addColorStop(0, 'rgba(16, 185, 129, 0.25)');
+      gradRain.addColorStop(1, 'rgba(16, 185, 129, 0.0)');
+
+      const gradBat = ctx.createLinearGradient(0, 0, 0, 250);
+      gradBat.addColorStop(0, 'rgba(20, 184, 166, 0.25)');
+      gradBat.addColorStop(1, 'rgba(20, 184, 166, 0.0)');
+      
+      weatherChart.data.labels = historyData.timestamps;
+
+      if (activeChartTab === 'temp') {
+        weatherChart.data.datasets[0].label = 'Nhiệt độ Thực tế (°C)';
+        weatherChart.data.datasets[0].data = historyData.temperature;
+        weatherChart.data.datasets[0].borderColor = '#f97316';
+        weatherChart.data.datasets[0].backgroundColor = gradTemp;
+        weatherChart.data.datasets[0].hidden = false;
+        
+        weatherChart.data.datasets[1].label = 'Dự báo Nhiệt độ Python AI (°C)';
+        weatherChart.data.datasets[1].data = historyData.predictedTemp;
+        weatherChart.data.datasets[1].borderColor = '#eab308';
+        weatherChart.data.datasets[1].hidden = false;
+      } 
+      else if (activeChartTab === 'hum') {
+        weatherChart.data.datasets[0].label = 'Độ ẩm (%)';
+        weatherChart.data.datasets[0].data = historyData.humidity;
+        weatherChart.data.datasets[0].borderColor = '#38bdf8';
+        weatherChart.data.datasets[0].backgroundColor = gradHum;
+        weatherChart.data.datasets[0].hidden = false;
+        
+        weatherChart.data.datasets[1].hidden = true;
+      } 
+      else if (activeChartTab === 'pres') {
+        weatherChart.data.datasets[0].label = 'Áp suất khí quyển (hPa)';
+        weatherChart.data.datasets[0].data = historyData.pressure;
+        weatherChart.data.datasets[0].borderColor = '#a855f7';
+        weatherChart.data.datasets[0].backgroundColor = gradPres;
+        weatherChart.data.datasets[0].hidden = false;
+        
+        weatherChart.data.datasets[1].hidden = true;
+      }
+      else if (activeChartTab === 'rain') {
+        weatherChart.data.datasets[0].label = 'Lượng Mưa / Chỉ số khô ráo (0-1023)';
+        weatherChart.data.datasets[0].data = historyData.rain;
+        weatherChart.data.datasets[0].borderColor = '#10b981';
+        weatherChart.data.datasets[0].backgroundColor = gradRain;
+        weatherChart.data.datasets[0].hidden = false;
+        
+        weatherChart.data.datasets[1].label = 'Xác suất mưa Python AI (%)';
+        weatherChart.data.datasets[1].data = historyData.rainProbability;
+        weatherChart.data.datasets[1].borderColor = '#06b6d4';
+        weatherChart.data.datasets[1].hidden = false;
+      }
+      else if (activeChartTab === 'bat') {
+        weatherChart.data.datasets[0].label = 'Nguồn Pin Trạm Đo (%)';
+        weatherChart.data.datasets[0].data = historyData.battery;
+        weatherChart.data.datasets[0].borderColor = '#14b8a6';
+        weatherChart.data.datasets[0].backgroundColor = gradBat;
+        weatherChart.data.datasets[0].hidden = false;
+        
+        weatherChart.data.datasets[1].hidden = true;
+      }
+      
+      weatherChart.update();
+    }
+
+    // THU THẬP DỮ LIỆU
+    function startDataFetching() {
+      if (fetchInterval) clearInterval(fetchInterval);
+      const intervalTime = (config.dataSource === 'local') ? 2000 : 16000;
+      fetchInterval = setInterval(refreshData, intervalTime);
+    }
+
+    function refreshData() {
+      if (config.dataSource === 'local') {
+        fetchFromLocalESP();
+      } else {
+        fetchFromThingSpeak();
+      }
+    }
+
+    function fetchFromLocalESP() {
+      const url = `http://${config.espIp}/data`;
+      
+      fetch(url)
+        .then(response => {
+          if (!response.ok) throw new Error("Local Network Error");
+          return response.json();
+        })
+        .then(data => {
+          updateConnectionStatus(true, "Đang kết nối: Local Gateway OK");
+          
+          currentData.temperature = parseFloat(data.temperature);
+          currentData.humidity = parseFloat(data.humidity);
+          currentData.pressure = parseFloat(data.pressure);
+          currentData.rain = parseInt(data.rain);
+          currentData.battery = parseInt(data.battery_pct || 100);
+          
+          currentData.predictedTemp = currentData.predictedTemp || currentData.temperature;
+          currentData.rainProbability = currentData.rainProbability || (currentData.rain < 500 ? 90 : 10);
+          currentData.pressureTrend = currentData.pressureTrend || 0.0;
+          
+          currentData.rssi = parseInt(data.rssi || -70);
+          currentData.seqNum = parseInt(data.seq_num || 0);
+          currentData.lastUpdated = new Date().toLocaleTimeString('vi-VN');
+          
+          addLocalHistory(currentData);
+          updateUI();
+          runLinearRegression();
+        })
+        .catch(err => {
+          console.warn("Không kết nối được ESP8266 local, chạy mô phỏng...", err);
+          updateConnectionStatus(false, "Mất kết nối Local Gateway. Đang chạy mô phỏng.");
+          generateMockData();
+        });
+    }
+
+    function fetchFromThingSpeak() {
+      if (!config.channelId) {
+        updateConnectionStatus(false, "Chưa điền Channel ID. Đang chạy mô phỏng.");
+        generateMockData();
+        return;
+      }
+      
+      let url = `https://api.thingspeak.com/channels/${config.channelId}/feeds.json?results=20`;
+      if (config.readApiKey) {
+        url += `&api_key=${config.readApiKey}`;
+      }
+      
+      fetch(url)
+        .then(response => {
+          if (!response.ok) throw new Error("ThingSpeak Server Error");
+          return response.json();
+        })
+        .then(data => {
+          if (!data.feeds || data.feeds.length === 0) {
+            throw new Error("Kênh trống.");
+          }
+          
+          updateConnectionStatus(true, "Đang kết nối: ThingSpeak Cloud OK");
+          
+          historyData.timestamps = [];
+          historyData.temperature = [];
+          historyData.humidity = [];
+          historyData.pressure = [];
+          historyData.rain = [];
+          historyData.battery = [];
+          historyData.predictedTemp = [];
+          historyData.rainProbability = [];
+          historyData.pressureTrend = [];
+          
+          data.feeds.forEach(feed => {
+            const date = new Date(feed.created_at);
+            const timeStr = `${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
+            
+            // Forward Fill Sensor Values
+            let temp = (feed.field1 !== null && feed.field1 !== undefined && feed.field1 !== '') ? parseFloat(feed.field1) : null;
+            if (temp === null) {
+              temp = historyData.temperature.length > 0 ? historyData.temperature[historyData.temperature.length - 1] : 0;
+            }
+            
+            let hum = (feed.field2 !== null && feed.field2 !== undefined && feed.field2 !== '') ? parseFloat(feed.field2) : null;
+            if (hum === null) {
+              hum = historyData.humidity.length > 0 ? historyData.humidity[historyData.humidity.length - 1] : 0;
+            }
+            
+            let pres = (feed.field3 !== null && feed.field3 !== undefined && feed.field3 !== '') ? parseFloat(feed.field3) : null;
+            if (pres === null) {
+              pres = historyData.pressure.length > 0 ? historyData.pressure[historyData.pressure.length - 1] : 0;
+            }
+            
+            let rainVal = (feed.field4 !== null && feed.field4 !== undefined && feed.field4 !== '') ? parseInt(feed.field4) : null;
+            if (rainVal === null) {
+              rainVal = historyData.rain.length > 0 ? historyData.rain[historyData.rain.length - 1] : 1023;
+            }
+            
+            let bat = (feed.field5 !== null && feed.field5 !== undefined && feed.field5 !== '') ? parseInt(feed.field5) : null;
+            if (bat === null) {
+              bat = historyData.battery.length > 0 ? historyData.battery[historyData.battery.length - 1] : 100;
+            }
+            
+            // Forward Fill Python AI values
+            let predT = (feed.field6 !== null && feed.field6 !== undefined && feed.field6 !== '') ? parseFloat(feed.field6) : null;
+            if (predT === null) {
+              predT = historyData.predictedTemp.length > 0 ? historyData.predictedTemp[historyData.predictedTemp.length - 1] : null;
+            }
+            
+            let rainP = (feed.field7 !== null && feed.field7 !== undefined && feed.field7 !== '') ? parseFloat(feed.field7) : null;
+            if (rainP === null) {
+              rainP = historyData.rainProbability.length > 0 ? historyData.rainProbability[historyData.rainProbability.length - 1] : null;
+            }
+            
+            let predStat = (feed.field8 !== null && feed.field8 !== undefined && feed.field8 !== '') ? parseInt(feed.field8) : null;
+            if (predStat === null) {
+              predStat = historyData.predictedStatus.length > 0 ? historyData.predictedStatus[historyData.predictedStatus.length - 1] : null;
+            }
+            
+            historyData.timestamps.push(timeStr);
+            historyData.temperature.push(temp);
+            historyData.humidity.push(hum);
+            historyData.pressure.push(pres);
+            historyData.rain.push(rainVal);
+            historyData.battery.push(bat);
+            historyData.predictedTemp.push(predT);
+            historyData.rainProbability.push(rainP);
+            historyData.predictedStatus.push(predStat);
+          });
+          
+          // Tìm entry mới nhất có dữ liệu cảm biến (field1 không null)
+          let latestSensorFeed = null;
+          for (let i = data.feeds.length - 1; i >= 0; i--) {
+            if (data.feeds[i].field1 !== null && data.feeds[i].field1 !== undefined && data.feeds[i].field1 !== '') {
+              latestSensorFeed = data.feeds[i];
+              break;
+            }
+          }
+          if (!latestSensorFeed) {
+            latestSensorFeed = data.feeds[data.feeds.length - 1];
+          }
+
+          // Tìm entry mới nhất có dữ liệu MATLAB (field6 không null)
+          let latestMatlabFeed = null;
+          for (let i = data.feeds.length - 1; i >= 0; i--) {
+            if (data.feeds[i].field6 !== null && data.feeds[i].field6 !== undefined && data.feeds[i].field6 !== '') {
+              latestMatlabFeed = data.feeds[i];
+              break;
+            }
+          }
+          if (!latestMatlabFeed) {
+            latestMatlabFeed = data.feeds[data.feeds.length - 1];
+          }
+
+          currentData.temperature = latestSensorFeed.field1 !== null ? parseFloat(latestSensorFeed.field1) : 0;
+          currentData.humidity = latestSensorFeed.field2 !== null ? parseFloat(latestSensorFeed.field2) : 0;
+          currentData.pressure = latestSensorFeed.field3 !== null ? parseFloat(latestSensorFeed.field3) : 0;
+          currentData.rain = latestSensorFeed.field4 !== null ? parseInt(latestSensorFeed.field4) : 1023;
+          currentData.battery = latestSensorFeed.field5 !== null ? parseInt(latestSensorFeed.field5) : 100;
+          
+          currentData.predictedTemp = latestMatlabFeed.field6 !== null ? parseFloat(latestMatlabFeed.field6) : null;
+          currentData.rainProbability = latestMatlabFeed.field7 !== null ? parseFloat(latestMatlabFeed.field7) : null;
+          currentData.predictedStatus = latestMatlabFeed.field8 !== null ? parseInt(latestMatlabFeed.field8) : null;
+          
+          currentData.rssi = null; 
+          currentData.seqNum = null;
+          
+          const lastUpdateDate = new Date(data.feeds[data.feeds.length - 1].created_at);
+          currentData.lastUpdated = lastUpdateDate.toLocaleTimeString('vi-VN');
+          
+          updateUI();
+          updateChartData();
+          runLinearRegression();
+        })
+        .catch(err => {
+          console.warn("Không kết nối được ThingSpeak, chạy mô phỏng...", err);
+          updateConnectionStatus(false, "Không lấy được dữ liệu Cloud. Đang chạy mô phỏng.");
+          generateMockData();
+        });
+    }
+
+    function updateConnectionStatus(isOnline, text) {
+      const dot = document.getElementById('statusDot');
+      const txt = document.getElementById('statusText');
+      if (isOnline) {
+        dot.className = "status-dot online";
+      } else {
+        dot.className = "status-dot offline";
+      }
+      txt.innerText = text;
+    }
+
+    function generateMockData() {
+      const baseTemp = 29.5 + Math.sin(Date.now() / 60000) * 2;
+      const baseHum = 75 + Math.cos(Date.now() / 60000) * 8;
+      const basePres = 1008 + Math.sin(Date.now() / 120000) * 3;
+      const rainRand = Math.random() > 0.85 ? 250 : 1023;
+      
+      currentData.temperature = parseFloat(baseTemp.toFixed(1));
+      currentData.humidity = parseFloat(baseHum.toFixed(1));
+      currentData.pressure = parseFloat(basePres.toFixed(1));
+      currentData.rain = rainRand;
+      currentData.battery = 98;
+      
+      currentData.predictedTemp = parseFloat((currentData.temperature + 0.4 - Math.random() * 0.8).toFixed(1));
+      currentData.rainProbability = rainRand < 500 ? 95 : 15;
+      currentData.predictedStatus = rainRand < 500 ? 2 : (baseHum > 78 ? 1 : 0);
+      
+      currentData.rssi = -68 - Math.floor(Math.random() * 8);
+      currentData.seqNum = (currentData.seqNum + 1) % 256;
+      currentData.lastUpdated = new Date().toLocaleTimeString('vi-VN');
+      
+      addLocalHistory(currentData);
+      updateUI();
+      updateChartData();
+      runLinearRegression();
+    }
+
+    function addLocalHistory(data) {
+      const now = new Date();
+      const timeStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}:${String(now.getSeconds()).padStart(2, '0')}`;
+      
+      historyData.timestamps.push(timeStr);
+      historyData.temperature.push(data.temperature);
+      historyData.humidity.push(data.humidity);
+      historyData.pressure.push(data.pressure);
+      historyData.rain.push(data.rain);
+      historyData.battery.push(data.battery);
+      historyData.predictedTemp.push(data.predictedTemp);
+      historyData.rainProbability.push(data.rainProbability);
+      historyData.predictedStatus.push(data.predictedStatus);
+      
+      if (historyData.timestamps.length > 20) {
+        historyData.timestamps.shift();
+        historyData.temperature.shift();
+        historyData.humidity.shift();
+        historyData.pressure.shift();
+        historyData.rain.shift();
+        historyData.battery.shift();
+        historyData.predictedTemp.shift();
+        historyData.rainProbability.shift();
+        historyData.predictedStatus.shift();
+      }
+    }
+
+    // CẬP NHẬT GIAO DIỆN NGƯỜI DÙNG (UI)
+    function updateUI() {
+      document.getElementById('mainTemp').innerText = currentData.temperature.toFixed(1);
+      
+      let summary = 'Không khí dễ chịu 🌤️';
+      let statusTag = 'Hệ thống an toàn';
+      let iconHtml = '';
+      
+      const isRaining = currentData.rain < 500;
+      
+      if (isRaining) {
+        summary = 'Hiện có mưa dông khí quyển 🌧️. Bà con canh tác lưu ý rào chắn, kiểm tra hệ thống thoát nước chống úng rễ cà phê, tiêu và ngưng bón phân.';
+        statusTag = 'Mưa dông úng ngập';
+        iconHtml = `
+          <svg viewBox="0 0 64 64" width="80" height="80" class="weather-icon-svg sun-cloud-anim" style="filter: drop-shadow(0 6px 12px rgba(56, 189, 248, 0.4))">
+            <defs>
+              <linearGradient id="cloudGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="#94a3b8" />
+                <stop offset="100%" stop-color="#475569" />
+              </linearGradient>
+            </defs>
+            <path d="M46 38a10 10 0 0 0-9-6 10.5 10.5 0 0 0-4 .8A12 12 0 1 0 22 50h24a10 10 0 0 0 0-20z" fill="url(#cloudGrad)"/>
+            <line x1="20" y1="54" x2="18" y2="60" stroke="#38bdf8" stroke-width="3" stroke-linecap="round"/>
+            <line x1="28" y1="54" x2="26" y2="60" stroke="#38bdf8" stroke-width="3" stroke-linecap="round"/>
+            <line x1="36" y1="54" x2="34" y2="60" stroke="#38bdf8" stroke-width="3" stroke-linecap="round"/>
+          </svg>
+        `;
+        showAlertBox(true, "⚠ Cảnh báo mưa úng! Kiểm tra ngay các rãnh thoát nước vườn sầu riêng Miền Tây và cà phê trũng.");
+      } else {
+        showAlertBox(false);
+        
+        if (currentData.temperature > 34) {
+          summary = 'Thời tiết nắng nóng gay gắt 🥵. Hãy tăng cường tưới ẩm đất rễ cây, đặc biệt là cây con và cà phê mới xuống giống để tránh héo lá.';
+          statusTag = 'Nắng nóng canh tác';
+          iconHtml = `
+            <svg viewBox="0 0 64 64" width="80" height="80" class="weather-icon-svg sun-cloud-anim">
+              <circle cx="32" cy="32" r="16" fill="url(#sunGradient)"/>
+              <line x1="32" y1="6" x2="32" y2="12" stroke="#f59e0b" stroke-width="4" stroke-linecap="round"/>
+              <line x1="32" y1="52" x2="32" y2="58" stroke="#f59e0b" stroke-width="4" stroke-linecap="round"/>
+              <line x1="6" y1="32" x2="12" y2="32" stroke="#f59e0b" stroke-width="4" stroke-linecap="round"/>
+              <line x1="52" y1="32" x2="58" y2="32" stroke="#f59e0b" stroke-width="4" stroke-linecap="round"/>
+            </svg>
+          `;
+        } else if (currentData.humidity > 85) {
+          summary = 'Độ ẩm không khí rất cao ☁️. Đề phòng nguy cơ phát triển các loại nấm ký sinh có hại (rỉ sắt, nấm hồng). Hạn chế phun phân bón lá lúc này.';
+          statusTag = 'Cảnh báo dịch hại';
+          iconHtml = `
+            <svg viewBox="0 0 64 64" width="80" height="80" class="weather-icon-svg sun-cloud-anim">
+              <path d="M46 38a10 10 0 0 0-9-6 10.5 10.5 0 0 0-4 .8A12 12 0 1 0 22 50h24a10 10 0 0 0 0-20z" fill="url(#cloudGradient)"/>
+            </svg>
+          `;
+        } else {
+          summary = 'Thời tiết nắng ráo thuận lợi 🌤️. Thích hợp để tiến hành bón phân dinh dưỡng, làm cỏ đất đai, tỉa cành hoặc phơi sấy hạt nông sản.';
+          statusTag = 'Canh tác tốt';
+          iconHtml = `
+            <svg viewBox="0 0 64 64" width="80" height="80" class="weather-icon-svg sun-cloud-anim">
+              <circle cx="24" cy="24" r="12" fill="url(#sunGradient)"/>
+              <path d="M46 38a10 10 0 0 0-9-6 10.5 10.5 0 0 0-4 .8A12 12 0 1 0 22 50h24a10 10 0 0 0 0-20z" fill="url(#cloudGradient)" opacity="0.95"/>
+            </svg>
+          `;
+        }
+      }
+      
+      document.getElementById('weatherSummary').innerText = summary;
+      document.getElementById('weatherStatusTag').innerText = statusTag;
+      document.getElementById('weatherIconContainer').innerHTML = iconHtml;
+      
+      // Cập nhật giá trị Hero banner
+      if (currentData.predictedTemp !== null) {
+        document.getElementById('subTemp').innerText = `${currentData.predictedTemp.toFixed(1)} °C`;
+      } else {
+        document.getElementById('subTemp').innerText = `-- °C`;
+      }
+      
+      if (currentData.rainProbability !== null) {
+        document.getElementById('subRain').innerText = `${currentData.rainProbability.toFixed(0)}%`;
+      } else {
+        document.getElementById('subRain').innerText = `--%`;
+      }
+
+      if (currentData.predictedStatus !== null) {
+        const statusMap = {0: "Nắng ráo ☀️", 1: "Nhiều mây ☁️", 2: "Mưa dông 🌧️"};
+        const iconMap = {0: "☀️", 1: "☁️", 2: "🌧️"};
+        document.getElementById('aiStatusText').innerText = statusMap[currentData.predictedStatus] || "Chưa rõ";
+        document.getElementById('aiStatusIcon').innerText = iconMap[currentData.predictedStatus] || "🤖";
+      } else {
+        document.getElementById('aiStatusText').innerText = "Đang tính...";
+        document.getElementById('aiStatusIcon').innerText = "🤖";
+      }
+
+      // Cập nhật Cards phía dưới
+      document.getElementById('valHumidity').innerText = currentData.humidity.toFixed(1);
+      document.getElementById('barHumidity').style.width = `${currentData.humidity}%`;
+      
+      document.getElementById('valPressure').innerText = currentData.pressure.toFixed(1);
+
+      const pressBadge = document.getElementById('badgePressure');
+      if (currentData.pressure < 1009) {
+        pressBadge.innerText = "Áp suất thấp";
+        pressBadge.style.color = "#ef4444";
+        pressBadge.style.backgroundColor = "rgba(239, 68, 68, 0.12)";
+      } else if (currentData.pressure > 1014) {
+        pressBadge.innerText = "Áp suất cao";
+        pressBadge.style.color = "#10b981";
+        pressBadge.style.backgroundColor = "rgba(16, 185, 129, 0.12)";
+      } else {
+        pressBadge.innerText = "Bình thường";
+        pressBadge.style.color = "#a855f7";
+        pressBadge.style.backgroundColor = "rgba(168, 85, 247, 0.12)";
+      }
+      
+      document.getElementById('valRain').innerText = currentData.rain;
+      const rainStatusEl = document.getElementById('statusRain');
+      if (currentData.rain < 300) {
+        rainStatusEl.innerText = "🌧️ Mưa lớn";
+        rainStatusEl.style.color = "#ef4444";
+      } else if (currentData.rain < 700) {
+        rainStatusEl.innerText = "🌦️ Mưa nhỏ / Phun";
+        rainStatusEl.style.color = "#eab308";
+      } else {
+        rainStatusEl.innerText = "☀️ Không mưa";
+        rainStatusEl.style.color = "#10b981";
+      }
+      
+      document.getElementById('valBattery').innerText = currentData.battery;
+      const batBar = document.getElementById('barBattery');
+      batBar.style.width = `${currentData.battery}%`;
+      if (currentData.battery < 20) {
+        batBar.style.background = "var(--error)";
+      } else if (currentData.battery < 50) {
+        batBar.style.background = "var(--warning)";
+      } else {
+        batBar.style.background = "var(--accent-bat-gradient)";
+      }
+      
+      document.getElementById('rssiValue').innerText = `${currentData.rssi} dBm`;
+      document.getElementById('seqNum').innerText = currentData.seqNum;
+      document.getElementById('lastUpdated').innerText = currentData.lastUpdated || "--";
+    }
+
+    function showAlertBox(show, msg = '') {
+      const box = document.getElementById('alertBox');
+      const msgEl = document.getElementById('alertMessage');
+      if (show) {
+        msgEl.innerText = msg;
+        box.classList.remove('hidden');
+      } else {
+        box.classList.add('hidden');
+      }
+    }
+
+    // THUẬT TOÁN HỌC MÁY HỒI QUY TUYẾN TÍNH (LINEAR REGRESSION ENGINE)
+    function calculateLinearRegression(yArr) {
+      const n = yArr.length;
+      if (n < 2) return { a: 0, b: 0, formula: 'y = --', predictNext: 0 };
+      
+      const xArr = Array.from({ length: n }, (_, i) => i + 1);
+      
+      let sumX = 0;
+      let sumY = 0;
+      let sumXY = 0;
+      let sumXX = 0;
+      
+      for (let i = 0; i < n; i++) {
+        sumX += xArr[i];
+        sumY += yArr[i];
+        sumXY += xArr[i] * yArr[i];
+        sumXX += xArr[i] * xArr[i];
+      }
+      
+      const denominator = (n * sumXX) - (sumX * sumX);
+      if (denominator === 0) return { a: 0, b: yArr[0], formula: `y = ${yArr[0]}`, predictNext: yArr[0] };
+      
+      const a = ((n * sumXY) - (sumX * sumY)) / denominator;
+      const b = (sumY - (a * sumX)) / n;
+      
+      const nextX = n + 1;
+      const predictNext = (a * nextX) + b;
+      
+      return { a, b, predictNext };
+    }
+
+    function runLinearRegression() {
+      const n = historyData.temperature.length;
+      if (n < 5) {
+        document.getElementById('systemRecommendation').innerText = `Chờ thu thập đủ dữ liệu khí tượng (Đã có ${n}/5 điểm dữ liệu)...`;
+        return;
+      }
+      
+      const regTemp = calculateLinearRegression(historyData.temperature);
+      const regHum = calculateLinearRegression(historyData.humidity);
+      const regPres = calculateLinearRegression(historyData.pressure);
+      
+      document.getElementById('mathTemp').innerText = `T(t) = ${regTemp.a.toFixed(2)} * t ${regTemp.b >= 0 ? '+' : '-'} ${Math.abs(regTemp.b).toFixed(2)}`;
+      document.getElementById('mathHum').innerText = `H(t) = ${regHum.a.toFixed(2)} * t ${regHum.b >= 0 ? '+' : '-'} ${Math.abs(regHum.b).toFixed(2)}`;
+      document.getElementById('mathPres').innerText = `P(t) = ${regPres.a.toFixed(2)} * t ${regPres.b >= 0 ? '+' : '-'} ${Math.abs(regPres.b).toFixed(2)}`;
+      
+      document.getElementById('predTemp').innerText = `${regTemp.predictNext.toFixed(1)} °C`;
+      document.getElementById('predHum').innerText = `${regHum.predictNext.toFixed(1)} %`;
+      document.getElementById('predPres').innerText = `${regPres.predictNext.toFixed(1)} hPa`;
+      
+      updateTrendBadge('trendTemp', regTemp.a, 0.05);
+      updateTrendBadge('trendHum', regHum.a, 0.1);
+      updateTrendBadge('trendPres', regPres.a, 0.05);
+      
+      const signPres = regPres.a >= 0 ? '+' : '';
+      document.getElementById('subPressure').innerText = `Trend: ${signPres}${regPres.a.toFixed(3)}`;
+      
+      generateSmartRecommendation(regTemp.a, regHum.a, regPres.a);
+    }
+
+    function updateTrendBadge(elemId, slope, threshold) {
+      const badge = document.getElementById(elemId);
+      if (slope > threshold) {
+        badge.innerText = "Tăng 📈";
+        badge.className = "pred-trend trend-up";
+      } else if (slope < -threshold) {
+        badge.innerText = "Giảm 📉";
+        badge.className = "pred-trend trend-down";
+      } else {
+        badge.innerText = "Ổn định ➔";
+        badge.className = "pred-trend trend-stable";
+      }
+    }
+
+    function generateSmartRecommendation(slopeT, slopeH, slopeP) {
+      let rec = "";
+      if (slopeT < -0.05 && slopeH > 0.1) {
+        rec = "Khuyến nghị canh tác: Nhiệt độ giảm nhanh và độ ẩm tăng mạnh. Khả năng cao có mưa rào hoặc dông lốc trong 30-60 phút tới. Bà con nên ngưng ngay việc bón phân, thu hồi nông sản đang phơi sấy (cà phê, lúa) và rà soát hệ thống tiêu úng.";
+      } else if (slopeP < -0.05 && currentData.rain < 900) {
+        rec = "Khuyến nghị canh tác: Khí áp giảm kèm lượng mưa tích tụ. Dấu hiệu của áp thấp nhiệt đới hoặc mưa dông kéo dài. Cảnh báo nguy cơ thối rễ cây ăn trái ở Miền Tây. Hãy gia cố bờ bao vườn sầu riêng, cam sành để chủ động chống ngập úng.";
+      } else if (slopeT > 0.05 && slopeH < -0.1) {
+        rec = "Khuyến nghị canh tác: Nhiệt độ tăng và độ ẩm giảm dần. Trời nắng ấm tạnh ráo. Thời tiết rất thích hợp để bón phân thúc nông sản, tiến hành phun thuốc phòng trừ sâu bệnh hoặc phơi sấy hạt tiêu, hạt cà phê.";
+      } else if (Math.abs(slopeT) <= 0.05 && Math.abs(slopeH) <= 0.1) {
+        rec = "Khuyến nghị canh tác: Khí áp và độ ẩm không khí rất ổn định. Không phát hiện biến động thời tiết cực đoan trong 2 giờ tới. Điều kiện lý tưởng để cấy lúa, xuống giống cây trồng mới hoặc cắt tỉa cành tạo tán.";
+      } else {
+        rec = "Nhận định khuyến nông: Chỉ số nhiệt ẩm dao động ổn định trong biên độ canh tác an toàn. Bà con duy trì lượng nước tưới tiêu buổi sáng/chiều và chăm sóc cây trồng theo lịch định kỳ.";
+      }
+      document.getElementById('systemRecommendation').innerText = rec;
+    }
+  </script>
+</body>
+</html>
+)rawliteral";
+
+#endif
