@@ -260,10 +260,8 @@ export default function App() {
             rainP = rainProbability.length > 0 ? rainProbability[rainProbability.length - 1] : null;
           }
           
-          let predStat = (feed.field8 !== null && feed.field8 !== undefined && feed.field8 !== '') ? parseInt(feed.field8) : null;
-          if (predStat === null) {
-            predStat = predictedStatus.length > 0 ? predictedStatus[predictedStatus.length - 1] : null;
-          }
+          // Tính toán trạng thái thời tiết dự tính động dựa trên xác suất mưa (field7) và độ ẩm (field2)
+          let predStat = (rainP !== null && rainP > 50) ? 2 : (hum > 78 ? 1 : 0);
           
           timestamps.push(timeStr);
           temperature.push(temp);
@@ -319,7 +317,7 @@ export default function App() {
           battery: latestSensorFeed.field5 !== null ? parseInt(latestSensorFeed.field5) : 100,
           predictedTemp: latestMLFeed.field6 !== null ? parseFloat(latestMLFeed.field6) : null,
           rainProbability: latestMLFeed.field7 !== null ? parseFloat(latestMLFeed.field7) : null,
-          predictedStatus: latestMLFeed.field8 !== null ? parseInt(latestMLFeed.field8) : null,
+          predictedStatus: (latestMLFeed.field7 !== null && parseFloat(latestMLFeed.field7) > 50) ? 2 : (latestSensorFeed.field2 !== null && parseFloat(latestSensorFeed.field2) > 78 ? 1 : 0),
           rssi: null,
           seqNum: null,
           lastUpdated: lastUpdateDate.toLocaleTimeString('vi-VN')

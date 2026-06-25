@@ -37,28 +37,24 @@ pTemp    = polyfit(t, temp, 1);
 nextTemp = polyval(pTemp, length(temp) + 1);
 nextTemp = max(min(nextTemp, max(temp) + 5), min(temp) - 5); % Giới hạn ngoại suy
 
-% ── 3. Xu hướng áp suất → ước lượng khả năng mưa & Trạng thái ────
+% ── 3. Xu hướng áp suất → ước lượng khả năng mưa ─────────────────
 pPres         = polyfit(t, pres, 1);
 pressureSlope = pPres(1);
 
 if pressureSlope < -1.0
     rainProb = 80;
-    status = 2; % Mưa dông
 elseif pressureSlope < -0.3
     rainProb = 50;
-    status = 1; % Nhiều mây
 elseif pressureSlope > 1.0
     rainProb = 5;
-    status = 0; % Nắng ráo
 else
     rainProb = 20;
-    status = 0; % Nắng ráo
 end
 
 % ── 4. Ghi kết quả vào field6,7,8 CỦA CÙNG CHANNEL ───────────────
 try
-    % Ghi [nextTemp, rainProb, status] vào các trường tương ứng để đồng bộ với UI React/HTML
-    thingSpeakWrite(channelID, [nextTemp, rainProb, status], ...
+    % Ghi [nextTemp, rainProb, pressureSlope] vào các trường tương ứng (field8 là xu hướng khí áp)
+    thingSpeakWrite(channelID, [nextTemp, rainProb, pressureSlope], ...
         'Fields', [6, 7, 8], 'WriteKey', writeAPIKey);
 catch ME
     error('Không ghi được kết quả: %s', ME.message);

@@ -1755,10 +1755,8 @@ const char htmlPage[] PROGMEM = R"rawliteral(
               rainP = historyData.rainProbability.length > 0 ? historyData.rainProbability[historyData.rainProbability.length - 1] : null;
             }
             
-            let predStat = (feed.field8 !== null && feed.field8 !== undefined && feed.field8 !== '') ? parseInt(feed.field8) : null;
-            if (predStat === null) {
-              predStat = historyData.predictedStatus.length > 0 ? historyData.predictedStatus[historyData.predictedStatus.length - 1] : null;
-            }
+            // Tính toán trạng thái thời tiết dự tính động dựa trên xác suất mưa (field7) và độ ẩm (field2)
+            let predStat = (rainP !== null && rainP > 50) ? 2 : (hum > 78 ? 1 : 0);
             
             historyData.timestamps.push(timeStr);
             historyData.temperature.push(temp);
@@ -1803,7 +1801,7 @@ const char htmlPage[] PROGMEM = R"rawliteral(
           
           currentData.predictedTemp = latestMatlabFeed.field6 !== null ? parseFloat(latestMatlabFeed.field6) : null;
           currentData.rainProbability = latestMatlabFeed.field7 !== null ? parseFloat(latestMatlabFeed.field7) : null;
-          currentData.predictedStatus = latestMatlabFeed.field8 !== null ? parseInt(latestMatlabFeed.field8) : null;
+          currentData.predictedStatus = (latestMatlabFeed.field7 !== null && parseFloat(latestMatlabFeed.field7) > 50) ? 2 : (latestSensorFeed.field2 !== null && parseFloat(latestSensorFeed.field2) > 78 ? 1 : 0);
           
           currentData.rssi = null; 
           currentData.seqNum = null;

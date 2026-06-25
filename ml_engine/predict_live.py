@@ -182,14 +182,14 @@ def preprocess_and_predict(feeds, feature_cols, model_temp, model_hum, model_sta
     status_map = {0: "Nắng ráo ☀️", 1: "Nhiều mây ☁️", 2: "Mưa dông 🌧️"}
     print(f"Trạng thái thời tiết dự đoán: {status_map.get(pred_status, 'Chưa rõ')}")
     
-    return pred_temp, rain_prob, pred_status
+    return pred_temp, rain_prob, input_data["pres_diff"]
 
-def upload_predictions(write_key, pred_temp, rain_prob, pred_status):
+def upload_predictions(write_key, pred_temp, rain_prob, pres_diff):
     """Uploads the predicted values back to ThingSpeak (field6, field7, field8)"""
     url = f"https://api.thingspeak.com/update?api_key={write_key}"
     url += f"&field6={pred_temp:.2f}"
     url += f"&field7={rain_prob:.1f}"
-    url += f"&field8={int(pred_status)}"
+    url += f"&field8={pres_diff:.3f}"
     
     print(f"Đang tải kết quả dự báo lên ThingSpeak...")
     try:
@@ -220,10 +220,10 @@ def main():
     
     try:
         feeds = fetch_latest_feeds(channel_id, read_key)
-        pred_temp, rain_prob, pred_status = preprocess_and_predict(
+        pred_temp, rain_prob, pres_diff = preprocess_and_predict(
             feeds, feature_cols, model_temp, model_hum, model_status
         )
-        upload_predictions(write_key, pred_temp, rain_prob, pred_status)
+        upload_predictions(write_key, pred_temp, rain_prob, pres_diff)
     except Exception as e:
         print(f"Lỗi xảy ra trong quá trình thực thi: {e}")
 
