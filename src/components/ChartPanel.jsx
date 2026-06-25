@@ -26,17 +26,73 @@ ChartJS.register(
 
 export default function ChartPanel({ historyData, activeChartTab, setActiveChartTab }) {
   
-  // Prepare labels (timestamps)
   const labels = historyData.timestamps || [];
   
+  // Ước lượng khoảng cách thời gian và mở rộng trục X thêm 1 tiếng (6 bước với chu kỳ 10 phút)
+  const stepsPerHour = 6;
+  const extendedLabels = [...labels];
+  
+  if (labels.length > 1) {
+    let intervalMins = 10;
+    try {
+      const getMinutes = (timeStr) => {
+        const parts = timeStr.split(':');
+        const h = parseInt(parts[0], 10);
+        const m = parseInt(parts[1], 10);
+        return h * 60 + m;
+      };
+      const diff = getMinutes(labels[labels.length - 1]) - getMinutes(labels[labels.length - 2]);
+      if (diff > 0 && diff <= 60) {
+        intervalMins = diff;
+      }
+    } catch (e) {}
+    
+    const lastTimestampStr = labels[labels.length - 1];
+    if (lastTimestampStr) {
+      try {
+        const parts = lastTimestampStr.split(':');
+        const h = parseInt(parts[0], 10);
+        const m = parseInt(parts[1], 10);
+        let lastTime = new Date();
+        lastTime.setHours(h, m, 0, 0);
+        
+        for (let i = 1; i <= stepsPerHour; i++) {
+          const futureTime = new Date(lastTime.getTime() + i * intervalMins * 60 * 1000);
+          const timeStr = `${String(futureTime.getHours()).padStart(2, '0')}:${String(futureTime.getMinutes()).padStart(2, '0')}`;
+          extendedLabels.push(timeStr);
+        }
+      } catch (e) {}
+    }
+  }
+
+  // Hàm đồng bộ và kéo dài dữ liệu thực tế & dự báo:
+  // - Thực tế (Actual) kéo dài thêm 6 giá trị null ở cuối (vì chưa xảy ra)
+  // - Dự đoán (Predicted) tại thời điểm i là dự đoán cho i + 6 (1 tiếng sau), nên dịch chuyển sang phải 6 đơn vị.
+  const alignData = (actual, predicted) => {
+    const alignedActual = [...actual];
+    for (let i = 0; i < stepsPerHour; i++) {
+      alignedActual.push(null);
+    }
+    
+    const alignedPredicted = Array(extendedLabels.length).fill(null);
+    if (predicted && predicted.length > 0) {
+      for (let i = 0; i < predicted.length; i++) {
+        if (predicted[i] !== null && predicted[i] !== undefined) {
+          alignedPredicted[i + stepsPerHour] = predicted[i];
+        }
+      }
+    }
+    return { alignedActual, alignedPredicted };
+  };
+
   // Build chart dataset config based on active tab
   let primaryLabel = "";
-  let primaryData = [];
+  let rawPrimaryData = [];
   let primaryColor = "#FF8C00";
   let primaryGradColor = "rgba(255, 140, 0, 0.12)";
   
   let secondaryLabel = "";
-  let secondaryData = [];
+  let rawSecondaryData = [];
   let secondaryColor = "#eab308";
   
   let showSecondary = false;
@@ -44,47 +100,51 @@ export default function ChartPanel({ historyData, activeChartTab, setActiveChart
   switch (activeChartTab) {
     case 'temp':
       primaryLabel = 'Nhiệt độ Thực tế (°C)';
-      primaryData = historyData.temperature || [];
+      rawPrimaryData = historyData.temperature || [];
       primaryColor = '#FF8C00';
       primaryGradColor = 'rgba(255, 140, 0, 0.12)';
       
       secondaryLabel = 'Dự báo AI (+1h) (°C)';
-      secondaryData = historyData.predictedTemp || [];
-      secondaryColor = '#dfc1a7';
+      rawSecondaryData = historyData.predictedTemp || [];
+      secondaryColor = '#f97316';
       showSecondary = true;
       break;
       
     case 'hum':
-      primaryLabel = 'Độ ẩm không khí (%)';
-      primaryData = historyData.humidity || [];
+      primaryLabel = 'Độ ẩm thực tế (%)';
+      rawPrimaryData = historyData.humidity || [];
       primaryColor = '#00F2FF';
       primaryGradColor = 'rgba(0, 242, 255, 0.12)';
-      showSecondary = false;
+      
+      secondaryLabel = 'Dự báo AI (+1h) (%)';
+      rawSecondaryData = historyData.predictedHumidity || [];
+      secondaryColor = '#38bdf8';
+      showSecondary = true;
       break;
       
     case 'pres':
       primaryLabel = 'Áp suất khí quyển (hPa)';
-      primaryData = historyData.pressure || [];
+      rawPrimaryData = historyData.pressure || [];
       primaryColor = '#00FF94';
       primaryGradColor = 'rgba(0, 255, 148, 0.12)';
       showSecondary = false;
       break;
       
     case 'rain':
-      primaryLabel = 'Lượng Mưa (Analog 0-1023)';
-      primaryData = historyData.rain || [];
-      primaryColor = '#00FF94';
-      primaryGradColor = 'rgba(0, 255, 148, 0.12)';
+      primaryLabel = 'Cảm biến mưa (Analog)';
+      rawPrimaryData = historyData.rain || [];
+      primaryColor = '#10b981';
+      primaryGradColor = 'rgba(16, 185, 129, 0.12)';
       
       secondaryLabel = 'Xác suất mưa AI (%)';
-      secondaryData = historyData.rainProbability || [];
-      secondaryColor = '#00F2FF';
+      rawSecondaryData = historyData.rainProbability || [];
+      secondaryColor = '#6366f1';
       showSecondary = true;
       break;
       
     case 'bat':
       primaryLabel = 'Nguồn Pin Trạm Đo (%)';
-      primaryData = historyData.battery || [];
+      rawPrimaryData = historyData.battery || [];
       primaryColor = '#74f5ff';
       primaryGradColor = 'rgba(116, 245, 255, 0.12)';
       showSecondary = false;
@@ -94,11 +154,14 @@ export default function ChartPanel({ historyData, activeChartTab, setActiveChart
       break;
   }
 
+  // Thực hiện đồng bộ và mở rộng dữ liệu cho biểu đồ
+  const { alignedActual, alignedPredicted } = alignData(rawPrimaryData, rawSecondaryData);
+
   // Create datasets list
   const datasets = [
     {
       label: primaryLabel,
-      data: primaryData,
+      data: alignedActual,
       borderColor: primaryColor,
       backgroundColor: (context) => {
         const chart = context.chart;
@@ -112,7 +175,10 @@ export default function ChartPanel({ historyData, activeChartTab, setActiveChart
       fill: true,
       tension: 0.35,
       borderWidth: 2,
-      pointRadius: 1,
+      pointRadius: (context) => {
+        const idx = context.dataIndex;
+        return idx < rawPrimaryData.length ? 1 : 0;
+      },
       pointHoverRadius: 6,
       pointHitRadius: 15,
       pointBackgroundColor: primaryColor,
@@ -124,13 +190,13 @@ export default function ChartPanel({ historyData, activeChartTab, setActiveChart
   if (showSecondary) {
     datasets.push({
       label: secondaryLabel,
-      data: secondaryData,
+      data: alignedPredicted,
       borderColor: secondaryColor,
       borderDash: [5, 5],
       fill: false,
       tension: 0.35,
       borderWidth: 2,
-      pointRadius: 1,
+      pointRadius: 1.5,
       pointHoverRadius: 6,
       pointHitRadius: 15,
       pointBackgroundColor: secondaryColor,
@@ -140,7 +206,7 @@ export default function ChartPanel({ historyData, activeChartTab, setActiveChart
   }
 
   const chartData = {
-    labels,
+    labels: extendedLabels,
     datasets
   };
 

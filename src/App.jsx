@@ -49,6 +49,7 @@ export default function App() {
     rain: [],
     battery: [],
     predictedTemp: [],
+    predictedHumidity: [],
     rainProbability: [],
     predictedStatus: []
   });
@@ -131,6 +132,7 @@ export default function App() {
         rain: [...prev.rain, data.rain],
         battery: [...prev.battery, data.battery],
         predictedTemp: [...prev.predictedTemp, data.predictedTemp],
+        predictedHumidity: [...prev.predictedHumidity, data.predictedHumidity],
         rainProbability: [...prev.rainProbability, data.rainProbability],
         predictedStatus: [...prev.predictedStatus, data.predictedStatus]
       };
@@ -251,6 +253,7 @@ export default function App() {
         const rain = [];
         const battery = [];
         const predictedTemp = [];
+        const predictedHumidity = [];
         const rainProbability = [];
         const predictedStatus = [];
         
@@ -272,7 +275,8 @@ export default function App() {
           rain: getFirstNonNull('field4', 1023),
           bat: getFirstNonNull('field5', 100),
           predT: getFirstNonNull('field6', null),
-          rainP: getFirstNonNull('field7', null)
+          rainP: getFirstNonNull('field7', null),
+          predH: getFirstNonNull('field8', null)
         };
 
         data.feeds.forEach(feed => {
@@ -342,6 +346,15 @@ export default function App() {
             rainP = rainProbability.length > 0 ? rainProbability[rainProbability.length - 1] : firstVal.rainP;
           }
           
+          let predH = null;
+          if (feed.field8 !== null && feed.field8 !== undefined && feed.field8 !== '' && feed.field8 !== 'null') {
+            const parsed = parseFloat(feed.field8);
+            if (!isNaN(parsed)) predH = parsed;
+          }
+          if (predH === null) {
+            predH = predictedHumidity.length > 0 ? predictedHumidity[predictedHumidity.length - 1] : firstVal.predH;
+          }
+          
           // Tính toán trạng thái thời tiết dự tính động dựa trên xác suất mưa (field7) và độ ẩm (field2)
           let predStat = (rainP !== null && rainP > 50) ? 2 : (hum > 78 ? 1 : 0);
           
@@ -352,6 +365,7 @@ export default function App() {
           rain.push(rainVal);
           battery.push(bat);
           predictedTemp.push(predT);
+          predictedHumidity.push(predH);
           rainProbability.push(rainP);
           predictedStatus.push(predStat);
         });
@@ -365,6 +379,7 @@ export default function App() {
           rain,
           battery,
           predictedTemp,
+          predictedHumidity,
           rainProbability,
           predictedStatus
         });
