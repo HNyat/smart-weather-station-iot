@@ -311,15 +311,25 @@ int loraTxWaitAck(const WeatherPkt_t& pkt) {
     spiWrite(REG_OP_MODE, LORA_FLAG | MODE_TX);
     
     unsigned long txStart = millis();
+    bool txTimeout = false;
     while ((spiRead(REG_IRQ_FLAGS) & IRQ_TX_DONE) == 0) {
-      if (millis() - txStart > TX_TIMEOUT_MS) break;
+      if (millis() - txStart > TX_TIMEOUT_MS) {
+        txTimeout = true;
+        break;
+      }
       yield();
     }
     spiWrite(REG_IRQ_FLAGS, IRQ_TX_DONE);
     
-    return 1; // Hoàn thành đẩy gói tin lên đường truyền
+    if (txTimeout) {
+      // Nếu quá thời gian truyền (timeout), thử lại ở vòng lặp sau
+      delay(100);
+      continue;
+    }
+    
+    return 1; // Hoàn thành đẩy gói tin lên đường truyền thành công
   }
-  return -999;
+  return -999; // Thất bại hoàn toàn sau khi thử lại tối đa
 }
 
 void saveStateAndSleep(bool txOK, const WeatherPkt_t& pkt) {
