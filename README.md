@@ -1,16 +1,152 @@
-# React + Vite
+# 🌦️ Smart Weather Station IoT - Trạm Khí Tượng LoRa P2P & Dự Báo Thời Tiết AI
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+Dự án nghiên cứu và triển khai hệ thống **Trạm quan trắc khí tượng thông minh (Smart Weather Station)** ứng dụng kết nối không dây tầm xa **LoRa P2P (Peer-to-Peer)**, tích hợp cổng **Gateway Cloud (ThingSpeak)** và mô hình dự báo thời tiết bằng trí tuệ nhân tạo **AI (Random Forest)** chạy tự động qua **GitHub Actions**.
 
-Currently, two official plugins are available:
+Dự án cung cấp giao diện theo dõi trực quan dạng **Web Dashboard (React + Vite)** hỗ trợ hai luồng thu thập dữ liệu song song: truy xuất trực tiếp từ Gateway nội bộ (Local) hoặc thông qua Cloud ThingSpeak.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+---
 
-## React Compiler
+## 📌 Sơ Đồ Kiến Trúc Hệ Thống (Architecture)
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+```mermaid
+graph TD
+    %% Thiết bị phần cứng
+    subgraph Sensor_Node [Trạm Đo Cảm Biến - Sensor Node]
+        S1[ESP8266 MCU]
+        S2[Cảm Biến Nhiệt Ẩm - DHT11]
+        S3[Cảm Biến Khí Áp - BMP280]
+        S4[Cảm Biến Mưa Analog]
+        S1 --- S2
+        S1 --- S3
+        S1 --- S4
+    end
 
-## Expanding the Oxlint configuration
+    subgraph Gateway_Node [Cổng Thu & Điều Phối - Gateway Node]
+        G1[ESP8266 MCU]
+        G2[Giao Diện Cục Bộ - Web Server Local]
+        G1 --- G2
+    end
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and Oxlint's TypeScript related rules in your project.
+    %% Truyền dẫn không dây
+    Sensor_Node -- "Sóng Không Dây LoRa P2P (SX1278 433MHz)" --> Gateway_Node
+
+    %% Kết nối luồng dữ liệu
+    Gateway_Node -- "WiFi (gửi dữ liệu cảm biến)" --> Cloud[ThingSpeak Cloud]
+
+    %% Luồng xử lý dữ liệu và AI
+    subgraph AI_Engine [Hệ Thống Phân Tích & Dự Báo]
+        ML[Python ML Engine - Random Forest]
+        MAT[MATLAB Analysis - Linear Regression]
+    end
+    
+    Cloud -- "Đọc dữ liệu lịch sử cảm biến" --> ML
+    ML -- "Ghi kết quả dự báo (+1h)" --> Cloud
+    Cloud -- "Đọc/Ghi dữ liệu" --> MAT
+
+    %% Giao diện người dùng
+    subgraph Frontend [Giao Diện Dashboard Người Dùng]
+        Dash[Web Dashboard - React + Vite]
+        DashHTML[Dashboard Tĩnh - Single HTML]
+    end
+    
+    Cloud -- "HTTP API (Cloud Mode)" --> Frontend
+    G2 -- "HTTP JSON API (Local Mode)" --> Frontend
+```
+
+---
+
+## 🚀 Các Tính Năng Nổi Bật
+
+1. **Truyền dẫn không dây công suất thấp (LoRa P2P)**:
+   - Sử dụng IC SX1278 (băng tần 433MHz) truyền dữ liệu nhị phân nén chặt (15-byte Payload).
+   - Cơ chế bảo mật và lọc nhiễu qua Sync Word (`0xAB`).
+   - Tối ưu hóa năng lượng trạm đo bằng chế độ ngủ sâu **Deep Sleep** (60 giây), tự động điều chỉnh chỉ số thu phát dựa trên độ suy hao tín hiệu thực tế.
+2. **Cổng Gateway Đa Nhiệm (Dual-Mode Access Point & Station)**:
+   - Vừa làm trạm phát sóng WiFi AP nội bộ cho người dùng kết nối trực tiếp, vừa tự động kết nối vào WiFi trạm để đẩy dữ liệu lên Cloud ThingSpeak.
+   - Cung cấp API nội bộ `/data` dạng định dạng JSON chuẩn.
+3. **Mô hình Trí Tuệ Nhân Tạo Dự Báo Thời Tiết (AI Engine)**:
+   - **Mô hình Random Forest (Python)**: Được huấn luyện dựa trên dữ liệu lịch sử thời tiết 3 năm thực tế (API Open-Meteo), tự động phân loại trạng thái thời tiết (Nắng ráo, Nhiều mây, Mưa dông) và dự báo nhiệt độ, độ ẩm sau 1 giờ tịnh tiến với độ chính xác cao.
+   - **GitHub Actions Integration**: Quy trình dự báo chạy tự động mỗi 30 phút trên GitHub Runner bằng cách gọi mô hình học máy đã huấn luyện sẵn và ghi kết quả ngược lại ThingSpeak.
+   - **MATLAB Analysis (Hồi quy tuyến tính)**: Thiết lập dự phòng trực tiếp trên nền tảng ThingSpeak để dự toán nhiệt độ và xu hướng áp suất nếu mô hình AI Python ngoại tuyến.
+4. **Dashboard Hiện Đại & Trực Quan (React & Tailwind/Custom CSS)**:
+   - Hỗ trợ chế độ màu tối (Dark Mode), hiệu ứng kính mờ (Glassmorphism), biểu đồ thời gian thực (Chart.js) mượt mà.
+   - Đưa ra những cảnh báo canh tác thông minh dựa trên xu hướng thay đổi nhiệt-ẩm cục bộ phục vụ thiết thực cho tưới tiêu, nông nghiệp Việt Nam (ví dụ: phòng ngập úng sầu riêng, bệnh rỉ sắt trên cà phê).
+
+---
+
+## 📂 Cấu Trúc Thư Mục Dự Án (Project Structure)
+
+```text
+├── .github/workflows/       # Cấu hình GitHub Actions tự động chạy AI (predict.yml)
+├── data/                    # Chứa tệp dữ liệu huấn luyện lịch sử và dashboard HTML tĩnh
+│   ├── historical_weather.csv
+│   └── viewWeatherStation.html
+├── gateway_node/            # Mã nguồn Arduino (C++) cho Trạm Gateway thu nhận dữ liệu
+│   ├── gateway_node.ino
+│   └── weather_html.h
+├── sensor_node/             # Mã nguồn Arduino (C++) cho Trạm Phát cảm biến đầu cuối
+│   └── sensor_node.ino
+├── ml_engine/               # Mã nguồn máy học (Python) phân tích khí tượng
+│   ├── train.py             # Huấn luyện mô hình Random Forest từ API thời tiết lịch sử
+│   ├── predict_live.py      # Lấy dữ liệu thực tế, tính toán đặc trưng trễ, dự báo và cập nhật
+│   └── requirements.txt     # Danh sách thư viện Python phụ thuộc
+├── models/                  # Lưu trữ các file mô hình máy học đã huấn luyện (.joblib)
+├── src/                     # Mã nguồn ứng dụng React (Vite)
+│   ├── components/          # Các components giao diện (MetricCard, ChartPanel, MLPanel...)
+│   ├── App.jsx              # Điểm bắt đầu xử lý luồng dữ liệu của giao diện
+│   └── index.css            # Định nghĩa Design System và hiệu ứng CSS
+└── vite.config.js           # Cấu hình đóng gói React + Vite
+```
+
+---
+
+## 🛠️ Hướng Dẫn Cài Đặt & Chạy Dự Án (Quickstart)
+
+### 1. Chạy Web Dashboard (React + Vite)
+Đảm bảo máy tính của bạn đã cài đặt [Node.js](https://nodejs.org/).
+```bash
+# Di chuyển đến thư mục dự án và cài đặt dependencies
+npm install
+
+# Khởi chạy dự án ở chế độ local development
+npm run dev
+```
+*Truy cập liên kết `http://localhost:5173` hiển thị trên màn hình terminal để kiểm tra.*
+
+### 2. Sử dụng Mô Hình Máy Học Python (ML Engine)
+Đảm bảo bạn đã cài đặt [Python 3.10+](https://www.python.org/).
+```bash
+# Cài đặt các thư viện cần thiết (numpy, pandas, scikit-learn, requests, joblib)
+pip install -r ml_engine/requirements.txt
+
+# Dự báo thời tiết thực tế (script tự động lấy dữ liệu từ ThingSpeak và cập nhật kết quả AI)
+python ml_engine/predict_live.py
+```
+
+### 3. Nạp Phần Cứng (ESP8266 & LoRa)
+Sử dụng công cụ **Arduino IDE** để nạp chương trình:
+- Thư viện bắt buộc: `DHT sensor library`, `Adafruit BMP280 Library`, `LoRa` (bởi Sandeep Mistry).
+- Điền thông tin WiFi gia đình và API Write Key của ThingSpeak vào [gateway_node.ino](file:///c:/Users/Lenovo/OneDrive/Documents/Study_Materials/FPTU_Syllabus/Sem4/IoT102t-Internet%20of%20Things/weatherStation/gateway_node/gateway_node.ino) trước khi tiến hành nạp.
+
+---
+
+## 📊 Bản Đồ Cấu Hình Các Trường ThingSpeak (Channel Fields)
+
+Để hệ thống hoạt động ổn định nhất, hãy cấu hình các trường (Fields) trên ThingSpeak Channel trùng khớp như sau:
+
+| Trường (Field) | Ý Nghĩa Dữ Liệu | Nguồn Ghi (Source) |
+| :--- | :--- | :--- |
+| **Field 1** | Nhiệt độ thực tế (°C) | Gateway Node (Sensor) |
+| **Field 2** | Độ ẩm thực tế (%) | Gateway Node (Sensor) |
+| **Field 3** | Khí áp thực tế (hPa) | Gateway Node (Sensor) |
+| **Field 4** | Cảm biến mưa (Giá trị Analog: 0 - 1023) | Gateway Node (Sensor) |
+| **Field 5** | Dung lượng Pin trạm phát (%) | Gateway Node (Sensor) |
+| **Field 6** | Dự báo nhiệt độ chu kỳ tới (°C) | Python AI / MATLAB |
+| **Field 7** | Xác suất mưa dự đoán (%) | Python AI / MATLAB |
+| **Field 8** | Trạng thái thời tiết (0: Nắng, 1: Mây, 2: Mưa) | Python AI / MATLAB |
+
+---
+
+## 📜 Giấy Phép & Bản Quyền
+
+Dự án này phục vụ cho mục đích học tập, nghiên cứu môn học **IoT102t (Internet of Things)** tại trường Đại học FPT. Bản quyền thuộc về các thành viên phát triển dự án. Mọi hình thức sao chép vui lòng trích dẫn nguồn đầy đủ.
