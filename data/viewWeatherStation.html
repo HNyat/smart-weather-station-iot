@@ -7,7 +7,7 @@
   <!-- Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Sora:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
   <!-- Chart.js CDN -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
@@ -16,34 +16,34 @@
        WEATHER STATION PRO - CSS STYLES (BALANCED LAYOUT)
        ========================================================================== */
     :root {
-      /* Color Palette */
-      --bg-primary: #080c14;
-      --bg-secondary: #0f1422;
-      --card-bg: rgba(22, 29, 49, 0.65);
-      --card-border: rgba(255, 255, 255, 0.06);
+      /* Deep Space Weather Palette */
+      --bg-primary: #131314;
+      --bg-secondary: #0e0e0f;
+      --card-bg: rgba(255, 255, 255, 0.03);
+      --card-border: rgba(255, 255, 255, 0.12);
       
-      --text-primary: #f8fafc;
-      --text-secondary: #94a3b8;
-      --text-muted: #64748b;
+      --text-primary: #e5e2e3;
+      --text-secondary: #c7c6cd;
+      --text-muted: #909097;
       
-      --accent-temp: #f97316;
-      --accent-temp-gradient: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
-      --accent-hum: #38bdf8;
-      --accent-hum-gradient: linear-gradient(135deg, #38bdf8 0%, #0284c7 100%);
-      --accent-pres: #a855f7;
-      --accent-pres-gradient: linear-gradient(135deg, #a855f7 0%, #7e22ce 100%);
-      --accent-rain: #10b981;
-      --accent-rain-gradient: linear-gradient(135deg, #10b981 0%, #059669 100%);
-      --accent-bat: #14b8a6;
-      --accent-bat-gradient: linear-gradient(135deg, #14b8a6 0%, #0d9488 100%);
+      --accent-temp: #FF8C00;
+      --accent-temp-gradient: linear-gradient(135deg, #FF8C00 0%, #d97706 100%);
+      --accent-hum: #00F2FF;
+      --accent-hum-gradient: linear-gradient(135deg, #00F2FF 0%, #008fa3 100%);
+      --accent-pres: #00FF94;
+      --accent-pres-gradient: linear-gradient(135deg, #00FF94 0%, #00b368 100%);
+      --accent-rain: #00F2FF;
+      --accent-rain-gradient: linear-gradient(135deg, #00F2FF 0%, #008fa3 100%);
+      --accent-bat: #00FF94;
+      --accent-bat-gradient: linear-gradient(135deg, #00FF94 0%, #00b368 100%);
       
-      --success: #22c55e;
+      --success: #00FF94;
       --warning: #eab308;
-      --error: #ef4444;
+      --error: #FF3131;
       
       /* Fonts */
-      --font-display: 'Outfit', sans-serif;
-      --font-body: 'Plus Jakarta Sans', sans-serif;
+      --font-display: 'Sora', sans-serif;
+      --font-body: 'Inter', sans-serif;
     }
 
     * {
@@ -372,12 +372,30 @@
       display: flex;
       align-items: center;
       gap: 8px;
-      background: rgba(255, 255, 255, 0.04);
-      border: 1px solid rgba(255, 255, 255, 0.06);
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.08);
       padding: 6px 12px;
       border-radius: 8px;
       font-size: 11px;
       font-weight: 600;
+    }
+
+    .hero-badge.badge-temp {
+      border-color: rgba(255, 140, 0, 0.2);
+      background: rgba(255, 140, 0, 0.04);
+      color: #ffa133;
+    }
+    
+    .hero-badge.badge-rain {
+      border-color: rgba(0, 242, 255, 0.2);
+      background: rgba(0, 242, 255, 0.04);
+      color: #33f5ff;
+    }
+    
+    .hero-badge.badge-status {
+      border-color: rgba(0, 255, 148, 0.2);
+      background: rgba(0, 255, 148, 0.04);
+      color: #33ffaa;
     }
 
     .badge-icon {
@@ -411,9 +429,10 @@
       background: var(--card-bg);
       border: 1px solid var(--card-border);
       border-radius: 24px;
-      backdrop-filter: blur(12px);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
       padding: 24px;
-      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
       transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275), border-color 0.2s, box-shadow 0.3s;
     }
 
@@ -466,17 +485,21 @@
     .bat-theme .card-icon { background: rgba(20, 184, 166, 0.08); color: var(--accent-bat); }
 
     .card-info h3 {
-      font-size: 13px;
-      color: var(--text-secondary);
-      font-weight: 500;
-      margin-bottom: 2px;
+      font-family: var(--font-body);
+      font-size: 12px;
+      font-weight: 700;
+      line-height: 16px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-bottom: 4px;
     }
 
     .card-value {
       font-family: var(--font-display);
       font-size: 28px;
-      font-weight: 700;
-      line-height: 1.1;
+      font-weight: 600;
+      line-height: 36px;
     }
 
     .card-value .unit {
@@ -714,10 +737,34 @@
       white-space: nowrap;
     }
 
-    .chart-tab.active {
+    .chart-tab.tab-temp.active {
       background: var(--accent-temp-gradient);
       color: var(--text-primary);
-      box-shadow: 0 3px 8px rgba(249, 115, 22, 0.25);
+      box-shadow: 0 3px 8px rgba(255, 140, 0, 0.3);
+    }
+    
+    .chart-tab.tab-hum.active {
+      background: var(--accent-hum-gradient);
+      color: var(--text-primary);
+      box-shadow: 0 3px 8px rgba(0, 242, 255, 0.3);
+    }
+    
+    .chart-tab.tab-pres.active {
+      background: var(--accent-pres-gradient);
+      color: var(--text-primary);
+      box-shadow: 0 3px 8px rgba(0, 255, 148, 0.3);
+    }
+    
+    .chart-tab.tab-rain.active {
+      background: var(--accent-rain-gradient);
+      color: var(--text-primary);
+      box-shadow: 0 3px 8px rgba(0, 242, 255, 0.3);
+    }
+    
+    .chart-tab.tab-bat.active {
+      background: var(--accent-bat-gradient);
+      color: var(--text-primary);
+      box-shadow: 0 3px 8px rgba(0, 255, 148, 0.3);
     }
 
     .chart-wrapper {
@@ -921,17 +968,17 @@
       transform: translateX(-50%);
       background: var(--error);
       color: white;
-      padding: 12px 24px;
-      border-radius: 30px;
+      padding: 14px 28px;
+      border-radius: 16px;
       display: flex;
       align-items: center;
-      gap: 10px;
-      box-shadow: 0 8px 25px rgba(239, 68, 68, 0.4);
+      gap: 12px;
+      box-shadow: 0 8px 30px rgba(255, 49, 49, 0.4);
       font-weight: 700;
       font-size: 13px;
       z-index: 1000;
       animation: slide-up 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.15);
     }
 
     .alert-banner.hidden {
@@ -1075,17 +1122,17 @@
           <span class="temp-unit">°C</span>
         </div>
         <div class="hero-badges">
-          <div class="hero-badge">
+          <div class="hero-badge badge-temp">
             <span class="badge-icon">🤖</span>
             <span class="badge-label">Python AI dự báo:</span>
             <span class="badge-value" id="subTemp">-- °C</span>
           </div>
-          <div class="hero-badge">
+          <div class="hero-badge badge-rain">
             <span class="badge-icon">⛈️</span>
             <span class="badge-label">Xác suất mưa:</span>
             <span class="badge-value" id="subRain">--%</span>
           </div>
-          <div class="hero-badge">
+          <div class="hero-badge badge-status">
             <span class="badge-icon" id="aiStatusIcon">🤖</span>
             <span class="badge-label">Dự kiến (+1h):</span>
             <span class="badge-value" id="aiStatusText">Đang tính...</span>
@@ -1211,11 +1258,11 @@
             <h2>Biểu Đồ Khí Hậu Canh Tác (8 Kênh)</h2>
             <div class="chart-tabs-wrapper">
               <div class="chart-tabs">
-                <button class="chart-tab active" onclick="switchChart('temp')">Nhiệt Độ Canh Tác</button>
-                <button class="chart-tab" onclick="switchChart('hum')">Độ Ẩm Đất/Khí</button>
-                <button class="chart-tab" onclick="switchChart('pres')">Khí Áp Canh Tác</button>
-                <button class="chart-tab" onclick="switchChart('rain')">Lượng Mưa</button>
-                <button class="chart-tab" onclick="switchChart('bat')">Nguồn Điện (Pin)</button>
+                <button class="chart-tab tab-temp active" onclick="switchChart('temp')">Nhiệt Độ Canh Tác</button>
+                <button class="chart-tab tab-hum" onclick="switchChart('hum')">Độ Ẩm Đất/Khí</button>
+                <button class="chart-tab tab-pres" onclick="switchChart('pres')">Khí Áp Canh Tác</button>
+                <button class="chart-tab tab-rain" onclick="switchChart('rain')">Lượng Mưa</button>
+                <button class="chart-tab tab-bat" onclick="switchChart('bat')">Nguồn Điện (Pin)</button>
               </div>
             </div>
           </div>
@@ -1461,20 +1508,44 @@
         rain: ctx.createLinearGradient(0, 0, 0, 250),
         bat: ctx.createLinearGradient(0, 0, 0, 250)
       };
-      chartGradients.temp.addColorStop(0, 'rgba(249, 115, 22, 0.3)');
-      chartGradients.temp.addColorStop(1, 'rgba(249, 115, 22, 0.0)');
+      chartGradients.temp.addColorStop(0, 'rgba(255, 140, 0, 0.12)');
+      chartGradients.temp.addColorStop(1, 'rgba(19, 19, 20, 0.0)');
       
-      chartGradients.hum.addColorStop(0, 'rgba(56, 189, 248, 0.3)');
-      chartGradients.hum.addColorStop(1, 'rgba(56, 189, 248, 0.0)');
+      chartGradients.hum.addColorStop(0, 'rgba(0, 242, 255, 0.12)');
+      chartGradients.hum.addColorStop(1, 'rgba(19, 19, 20, 0.0)');
       
-      chartGradients.pres.addColorStop(0, 'rgba(168, 85, 247, 0.3)');
-      chartGradients.pres.addColorStop(1, 'rgba(168, 85, 247, 0.0)');
+      chartGradients.pres.addColorStop(0, 'rgba(0, 255, 148, 0.12)');
+      chartGradients.pres.addColorStop(1, 'rgba(19, 19, 20, 0.0)');
 
-      chartGradients.rain.addColorStop(0, 'rgba(16, 185, 129, 0.3)');
-      chartGradients.rain.addColorStop(1, 'rgba(16, 185, 129, 0.0)');
+      chartGradients.rain.addColorStop(0, 'rgba(0, 255, 148, 0.12)');
+      chartGradients.rain.addColorStop(1, 'rgba(19, 19, 20, 0.0)');
 
-      chartGradients.bat.addColorStop(0, 'rgba(20, 184, 166, 0.3)');
-      chartGradients.bat.addColorStop(1, 'rgba(20, 184, 166, 0.0)');
+      chartGradients.bat.addColorStop(0, 'rgba(0, 242, 255, 0.12)');
+      chartGradients.bat.addColorStop(1, 'rgba(19, 19, 20, 0.0)');
+
+      // Crosshair Guideline Plugin
+      const verticalLinePlugin = {
+        id: 'verticalLine',
+        afterDraw: (chart) => {
+          if (chart.tooltip?._active && chart.tooltip._active.length) {
+            const activePoint = chart.tooltip._active[0];
+            const ctx = chart.ctx;
+            const x = activePoint.element.x;
+            const topY = chart.scales.y.top;
+            const bottomY = chart.scales.y.bottom;
+            
+            ctx.save();
+            ctx.beginPath();
+            ctx.moveTo(x, topY);
+            ctx.lineTo(x, bottomY);
+            ctx.lineWidth = 1;
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.15)';
+            ctx.setLineDash([4, 4]);
+            ctx.stroke();
+            ctx.restore();
+          }
+        }
+      };
 
       const chartConfigs = {
         type: 'line',
@@ -1484,23 +1555,32 @@
             {
               label: 'Thực tế',
               data: [],
-              borderColor: '#f97316',
+              borderColor: '#FF8C00',
               backgroundColor: chartGradients.temp,
               fill: true,
-              tension: 0.4,
-              borderWidth: 3,
-              pointBackgroundColor: '#f97316',
-              pointHoverRadius: 6
+              tension: 0.35,
+              borderWidth: 2,
+              pointRadius: 0.5,
+              pointHoverRadius: 6,
+              pointHitRadius: 15,
+              pointBackgroundColor: '#FF8C00',
+              pointBorderColor: 'rgba(255, 255, 255, 0.8)',
+              pointBorderWidth: 1.5
             },
             {
               label: 'Dự đoán (MATLAB)',
               data: [],
               borderColor: '#eab308',
-              borderDash: [4, 4],
+              borderDash: [5, 5],
               fill: false,
-              tension: 0.4,
+              tension: 0.35,
               borderWidth: 2,
-              pointBackgroundColor: '#eab308'
+              pointRadius: 0.5,
+              pointHoverRadius: 6,
+              pointHitRadius: 15,
+              pointBackgroundColor: '#eab308',
+              pointBorderColor: 'rgba(255, 255, 255, 0.8)',
+              pointBorderWidth: 1.5
             }
           ]
         },
@@ -1510,20 +1590,54 @@
           plugins: {
             legend: { 
               display: true,
-              labels: { color: '#94a3b8', font: { family: 'Plus Jakarta Sans', size: 10 } }
+              position: 'top',
+              align: 'end',
+              labels: { 
+                color: '#c7c6cd', 
+                boxWidth: 8,
+                boxHeight: 8,
+                usePointStyle: true,
+                pointStyle: 'circle',
+                padding: 15,
+                font: { family: 'Sora', size: 11, weight: '500' } 
+              }
+            },
+            tooltip: {
+              backgroundColor: 'rgba(28, 27, 29, 0.95)',
+              titleColor: '#e5e2e3',
+              bodyColor: '#c7c6cd',
+              titleFont: { family: 'Sora', size: 12, weight: '600' },
+              bodyFont: { family: 'Inter', size: 12 },
+              padding: 12,
+              borderColor: 'rgba(255, 255, 255, 0.08)',
+              borderWidth: 1,
+              borderRadius: 10,
+              usePointStyle: true,
+              boxPadding: 6
             }
+          },
+          interaction: {
+            mode: 'index',
+            intersect: false
           },
           scales: {
             x: {
-              grid: { color: 'rgba(255, 255, 255, 0.05)' },
-              ticks: { color: '#94a3b8', font: { family: 'Plus Jakarta Sans', size: 10 } }
+              grid: { color: 'rgba(255, 255, 255, 0.025)', border: { dash: [4, 4], display: false } },
+              ticks: { 
+                color: '#909097', 
+                maxRotation: 0,
+                autoSkip: true,
+                maxTicksLimit: 8,
+                font: { family: 'Inter', size: 10, weight: '500' } 
+              }
             },
             y: {
-              grid: { color: 'rgba(255, 255, 255, 0.05)' },
-              ticks: { color: '#94a3b8', font: { family: 'Plus Jakarta Sans', size: 11 } }
+              grid: { color: 'rgba(255, 255, 255, 0.025)', border: { dash: [4, 4], display: false } },
+              ticks: { color: '#909097', font: { family: 'Inter', size: 11, weight: '500' } }
             }
           }
-        }
+        },
+        plugins: [verticalLinePlugin]
       };
       
       weatherChart = new Chart(ctx, chartConfigs);
@@ -1534,7 +1648,7 @@
       
       const tabs = document.querySelectorAll('.chart-tab');
       tabs.forEach(tab => {
-        if (tab.getAttribute('onclick').includes(tabName)) {
+        if (tab.classList.contains(`tab-${tabName}`)) {
           tab.classList.add('active');
         } else {
           tab.classList.remove('active');
@@ -1549,44 +1663,47 @@
       
       const ctx = document.getElementById('weatherHistoryChart').getContext('2d');
       const gradTemp = ctx.createLinearGradient(0, 0, 0, 250);
-      gradTemp.addColorStop(0, 'rgba(249, 115, 22, 0.25)');
-      gradTemp.addColorStop(1, 'rgba(249, 115, 22, 0.0)');
+      gradTemp.addColorStop(0, 'rgba(255, 140, 0, 0.12)');
+      gradTemp.addColorStop(1, 'rgba(19, 19, 20, 0.0)');
 
       const gradHum = ctx.createLinearGradient(0, 0, 0, 250);
-      gradHum.addColorStop(0, 'rgba(56, 189, 248, 0.25)');
-      gradHum.addColorStop(1, 'rgba(56, 189, 248, 0.0)');
+      gradHum.addColorStop(0, 'rgba(0, 242, 255, 0.12)');
+      gradHum.addColorStop(1, 'rgba(19, 19, 20, 0.0)');
 
       const gradPres = ctx.createLinearGradient(0, 0, 0, 250);
-      gradPres.addColorStop(0, 'rgba(168, 85, 247, 0.25)');
-      gradPres.addColorStop(1, 'rgba(168, 85, 247, 0.0)');
+      gradPres.addColorStop(0, 'rgba(0, 255, 148, 0.12)');
+      gradPres.addColorStop(1, 'rgba(19, 19, 20, 0.0)');
 
       const gradRain = ctx.createLinearGradient(0, 0, 0, 250);
-      gradRain.addColorStop(0, 'rgba(16, 185, 129, 0.25)');
-      gradRain.addColorStop(1, 'rgba(16, 185, 129, 0.0)');
+      gradRain.addColorStop(0, 'rgba(0, 255, 148, 0.12)');
+      gradRain.addColorStop(1, 'rgba(19, 19, 20, 0.0)');
 
       const gradBat = ctx.createLinearGradient(0, 0, 0, 250);
-      gradBat.addColorStop(0, 'rgba(20, 184, 166, 0.25)');
-      gradBat.addColorStop(1, 'rgba(20, 184, 166, 0.0)');
+      gradBat.addColorStop(0, 'rgba(0, 242, 255, 0.12)');
+      gradBat.addColorStop(1, 'rgba(19, 19, 20, 0.0)');
       
       weatherChart.data.labels = historyData.timestamps;
 
       if (activeChartTab === 'temp') {
         weatherChart.data.datasets[0].label = 'Nhiệt độ Thực tế (°C)';
         weatherChart.data.datasets[0].data = historyData.temperature;
-        weatherChart.data.datasets[0].borderColor = '#f97316';
+        weatherChart.data.datasets[0].borderColor = '#FF8C00';
         weatherChart.data.datasets[0].backgroundColor = gradTemp;
+        weatherChart.data.datasets[0].pointBackgroundColor = '#FF8C00';
         weatherChart.data.datasets[0].hidden = false;
         
         weatherChart.data.datasets[1].label = 'Dự báo Nhiệt độ Python AI (°C)';
         weatherChart.data.datasets[1].data = historyData.predictedTemp;
         weatherChart.data.datasets[1].borderColor = '#eab308';
+        weatherChart.data.datasets[1].pointBackgroundColor = '#eab308';
         weatherChart.data.datasets[1].hidden = false;
       } 
       else if (activeChartTab === 'hum') {
         weatherChart.data.datasets[0].label = 'Độ ẩm (%)';
         weatherChart.data.datasets[0].data = historyData.humidity;
-        weatherChart.data.datasets[0].borderColor = '#38bdf8';
+        weatherChart.data.datasets[0].borderColor = '#00F2FF';
         weatherChart.data.datasets[0].backgroundColor = gradHum;
+        weatherChart.data.datasets[0].pointBackgroundColor = '#00F2FF';
         weatherChart.data.datasets[0].hidden = false;
         
         weatherChart.data.datasets[1].hidden = true;
@@ -1594,8 +1711,9 @@
       else if (activeChartTab === 'pres') {
         weatherChart.data.datasets[0].label = 'Áp suất khí quyển (hPa)';
         weatherChart.data.datasets[0].data = historyData.pressure;
-        weatherChart.data.datasets[0].borderColor = '#a855f7';
+        weatherChart.data.datasets[0].borderColor = '#00FF94';
         weatherChart.data.datasets[0].backgroundColor = gradPres;
+        weatherChart.data.datasets[0].pointBackgroundColor = '#00FF94';
         weatherChart.data.datasets[0].hidden = false;
         
         weatherChart.data.datasets[1].hidden = true;
@@ -1603,20 +1721,23 @@
       else if (activeChartTab === 'rain') {
         weatherChart.data.datasets[0].label = 'Lượng Mưa / Chỉ số khô ráo (0-1023)';
         weatherChart.data.datasets[0].data = historyData.rain;
-        weatherChart.data.datasets[0].borderColor = '#10b981';
+        weatherChart.data.datasets[0].borderColor = '#00FF94';
         weatherChart.data.datasets[0].backgroundColor = gradRain;
+        weatherChart.data.datasets[0].pointBackgroundColor = '#00FF94';
         weatherChart.data.datasets[0].hidden = false;
         
         weatherChart.data.datasets[1].label = 'Xác suất mưa Python AI (%)';
         weatherChart.data.datasets[1].data = historyData.rainProbability;
-        weatherChart.data.datasets[1].borderColor = '#06b6d4';
+        weatherChart.data.datasets[1].borderColor = '#00F2FF';
+        weatherChart.data.datasets[1].pointBackgroundColor = '#00F2FF';
         weatherChart.data.datasets[1].hidden = false;
       }
       else if (activeChartTab === 'bat') {
         weatherChart.data.datasets[0].label = 'Nguồn Pin Trạm Đo (%)';
         weatherChart.data.datasets[0].data = historyData.battery;
-        weatherChart.data.datasets[0].borderColor = '#14b8a6';
+        weatherChart.data.datasets[0].borderColor = '#00F2FF';
         weatherChart.data.datasets[0].backgroundColor = gradBat;
+        weatherChart.data.datasets[0].pointBackgroundColor = '#00F2FF';
         weatherChart.data.datasets[0].hidden = false;
         
         weatherChart.data.datasets[1].hidden = true;
@@ -1710,6 +1831,27 @@
           historyData.rainProbability = [];
           historyData.pressureTrend = [];
           
+          const getFirstNonNull = (fieldName, fallback) => {
+            for (let i = 0; i < data.feeds.length; i++) {
+              const val = data.feeds[i][fieldName];
+              if (val !== null && val !== undefined && val !== '') {
+                const num = parseFloat(val);
+                if (!isNaN(num)) return num;
+              }
+            }
+            return fallback;
+          };
+
+          const firstVal = {
+            temp: getFirstNonNull('field1', 25),
+            hum: getFirstNonNull('field2', 70),
+            pres: getFirstNonNull('field3', 1010),
+            rain: getFirstNonNull('field4', 1023),
+            bat: getFirstNonNull('field5', 100),
+            predT: getFirstNonNull('field6', null),
+            rainP: getFirstNonNull('field7', null)
+          };
+
           data.feeds.forEach(feed => {
             const date = new Date(feed.created_at);
             const timeStr = `${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
@@ -1717,38 +1859,38 @@
             // Forward Fill Sensor Values
             let temp = (feed.field1 !== null && feed.field1 !== undefined && feed.field1 !== '') ? parseFloat(feed.field1) : null;
             if (temp === null) {
-              temp = historyData.temperature.length > 0 ? historyData.temperature[historyData.temperature.length - 1] : 0;
+              temp = historyData.temperature.length > 0 ? historyData.temperature[historyData.temperature.length - 1] : firstVal.temp;
             }
             
             let hum = (feed.field2 !== null && feed.field2 !== undefined && feed.field2 !== '') ? parseFloat(feed.field2) : null;
             if (hum === null) {
-              hum = historyData.humidity.length > 0 ? historyData.humidity[historyData.humidity.length - 1] : 0;
+              hum = historyData.humidity.length > 0 ? historyData.humidity[historyData.humidity.length - 1] : firstVal.hum;
             }
             
             let pres = (feed.field3 !== null && feed.field3 !== undefined && feed.field3 !== '') ? parseFloat(feed.field3) : null;
             if (pres === null) {
-              pres = historyData.pressure.length > 0 ? historyData.pressure[historyData.pressure.length - 1] : 0;
+              pres = historyData.pressure.length > 0 ? historyData.pressure[historyData.pressure.length - 1] : firstVal.pres;
             }
             
             let rainVal = (feed.field4 !== null && feed.field4 !== undefined && feed.field4 !== '') ? parseInt(feed.field4) : null;
             if (rainVal === null) {
-              rainVal = historyData.rain.length > 0 ? historyData.rain[historyData.rain.length - 1] : 1023;
+              rainVal = historyData.rain.length > 0 ? historyData.rain[historyData.rain.length - 1] : firstVal.rain;
             }
             
             let bat = (feed.field5 !== null && feed.field5 !== undefined && feed.field5 !== '') ? parseInt(feed.field5) : null;
             if (bat === null) {
-              bat = historyData.battery.length > 0 ? historyData.battery[historyData.battery.length - 1] : 100;
+              bat = historyData.battery.length > 0 ? historyData.battery[historyData.battery.length - 1] : firstVal.bat;
             }
             
             // Forward Fill Python AI values
             let predT = (feed.field6 !== null && feed.field6 !== undefined && feed.field6 !== '') ? parseFloat(feed.field6) : null;
             if (predT === null) {
-              predT = historyData.predictedTemp.length > 0 ? historyData.predictedTemp[historyData.predictedTemp.length - 1] : null;
+              predT = historyData.predictedTemp.length > 0 ? historyData.predictedTemp[historyData.predictedTemp.length - 1] : firstVal.predT;
             }
             
             let rainP = (feed.field7 !== null && feed.field7 !== undefined && feed.field7 !== '') ? parseFloat(feed.field7) : null;
             if (rainP === null) {
-              rainP = historyData.rainProbability.length > 0 ? historyData.rainProbability[historyData.rainProbability.length - 1] : null;
+              rainP = historyData.rainProbability.length > 0 ? historyData.rainProbability[historyData.rainProbability.length - 1] : firstVal.rainP;
             }
             
             // Tính toán trạng thái thời tiết dự tính động dựa trên xác suất mưa (field7) và độ ẩm (field2)

@@ -1,8 +1,6 @@
 import React from 'react';
 
-export default function MetricCard({ type, value, rawValue, statusText, trendText, progressValue }) {
-  // Configs for different metric card types
-  let cardClass = "";
+export default function MetricCard({ type, value, rawValue, trendText }) {
   let icon = null;
   let title = "";
   let unit = "";
@@ -11,113 +9,122 @@ export default function MetricCard({ type, value, rawValue, statusText, trendTex
 
   switch (type) {
     case 'humidity':
-      cardClass = "param-card glass-card hum-theme";
       title = "Độ Ẩm Không Khí";
       unit = "%";
       icon = (
-        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2">
-          <path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/>
-        </svg>
+        <div className="w-10 h-10 rounded-full bg-humidity-cyan/10 flex items-center justify-center border border-humidity-cyan/30">
+          <span className="material-symbols-outlined text-humidity-cyan neon-glow-cyan">water_drop</span>
+        </div>
       );
       extraContent = (
-        <div className="progress-bar-container">
-          <div className="progress-bar" style={{ width: `${value !== null ? value : 0}%` }}></div>
+        <div className="mt-4 h-1 w-full bg-surface-container rounded-full overflow-hidden">
+          <div 
+            className="h-full bg-humidity-cyan transition-all duration-500" 
+            style={{ width: `${value !== null ? Math.min(Math.max(value, 0), 100) : 0}%` }}
+          ></div>
         </div>
       );
       break;
 
     case 'pressure':
-      cardClass = "param-card glass-card pres-theme";
       title = "Áp Suất Khí Quyển";
       unit = "hPa";
       icon = (
-        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2">
-          <line x1="18" y1="20" x2="18" y2="10"></line>
-          <line x1="12" y1="20" x2="12" y2="4"></line>
-          <line x1="6" y1="20" x2="6" y2="14"></line>
-        </svg>
+        <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center border border-primary/30">
+          <span className="material-symbols-outlined text-primary">bar_chart</span>
+        </div>
       );
       
-      let badgeText = "--";
-      let badgeStyle = { color: "#a855f7", backgroundColor: "rgba(168, 85, 247, 0.12)" };
+      let badgeText = "Đang đọc...";
+      let badgeClass = "bg-glass-fill border border-glass-border text-on-surface-variant";
       
       if (value !== null) {
         if (value < 1009) {
           badgeText = "Áp suất thấp";
-          badgeStyle = { color: "#ef4444", backgroundColor: "rgba(239, 68, 68, 0.12)" };
+          badgeClass = "bg-error-container/20 border border-error-container/50 text-error";
         } else if (value > 1014) {
           badgeText = "Áp suất cao";
-          badgeStyle = { color: "#10b981", backgroundColor: "rgba(16, 185, 129, 0.12)" };
+          badgeClass = "bg-air-quality-green/10 border border-air-quality-green/20 text-air-quality-green";
         } else {
           badgeText = "Bình thường";
+          badgeClass = "bg-air-quality-green/10 border border-air-quality-green/20 text-air-quality-green";
         }
       }
 
       extraContent = (
-        <>
-          <div className="card-subtext">{trendText || 'Trend: --'}</div>
-          <div style={{ marginTop: '4px' }}>
-            <span className="pressure-badge" style={badgeStyle}>{badgeText}</span>
+        <div className="mt-2 flex flex-col gap-1">
+          <span className="text-[10px] text-on-surface-variant font-data-mono">{trendText || 'Hồi quy: Đang tính...'}</span>
+          <div>
+            <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold ${badgeClass}`}>
+              {badgeText}
+            </span>
           </div>
-        </>
+        </div>
       );
       break;
 
     case 'rain':
-      cardClass = "param-card glass-card rain-theme";
       title = "Lượng Mưa & Tưới Tiêu";
       icon = (
-        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2">
-          <path d="M20 17.58A5 5 0 0 0 18 8h-1.26A8 8 0 1 0 4 16.25"/>
-          <line x1="8" y1="16" x2="8" y2="22"></line>
-          <line x1="12" y1="18" x2="12" y2="22"></line>
-          <line x1="16" y1="16" x2="16" y2="22"></line>
-        </svg>
+        <div className="w-10 h-10 rounded-full bg-air-quality-green/10 flex items-center justify-center border border-air-quality-green/30">
+          <span className="material-symbols-outlined text-air-quality-green neon-glow-green">rainy</span>
+        </div>
       );
       valueDisplay = rawValue !== null && rawValue !== undefined ? rawValue : '--';
       unit = "/1023";
       
       let rainText = "Đang đọc...";
-      let rainColor = "#10b981";
+      let rainClass = "text-on-surface-variant";
+      let rainIcon = "device_thermostat";
       if (rawValue !== null && rawValue !== undefined) {
         if (rawValue < 300) {
-          rainText = "🌧️ Mưa lớn";
-          rainColor = "#ef4444";
+          rainText = "Mưa lớn";
+          rainClass = "text-warning-red font-bold";
+          rainIcon = "rainy";
         } else if (rawValue < 700) {
-          rainText = "🌦️ Mưa nhỏ / Phun";
-          rainColor = "#eab308";
+          rainText = "Mưa nhỏ / Phun";
+          rainClass = "text-temp-orange font-bold";
+          rainIcon = "cloudy_snowing";
         } else {
-          rainText = "☀️ Không mưa";
-          rainColor = "#10b981";
+          rainText = "Không mưa";
+          rainClass = "text-air-quality-green font-bold";
+          rainIcon = "sunny";
         }
       }
 
       extraContent = (
-        <span className="rain-status-text" style={{ color: rainColor }}>{rainText}</span>
+        <div className={`mt-2 text-xs flex items-center gap-1 ${rainClass}`}>
+          <span className="material-symbols-outlined text-[14px]">{rainIcon}</span>
+          {rainText}
+        </div>
       );
       break;
 
     case 'battery':
-      cardClass = "param-card glass-card bat-theme";
       title = "Pin Trạm Khí Tượng";
       unit = "%";
       icon = (
-        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2">
-          <rect x="2" y="7" width="16" height="10" rx="2" ry="2"></rect>
-          <line x1="22" y1="11" x2="22" y2="13"></line>
-        </svg>
+        <div className="w-10 h-10 rounded-full bg-secondary-fixed-dim/10 flex items-center justify-center border border-secondary-fixed-dim/30">
+          <span className="material-symbols-outlined text-secondary-fixed-dim">battery_full_alt</span>
+        </div>
       );
       valueDisplay = (value !== null && value !== undefined) ? value.toFixed(0) : '--';
       
-      let fillBackground = "var(--accent-bat-gradient)";
+      let batteryFillClass = "bg-secondary-fixed-dim shadow-[0_0_10px_rgba(0,219,231,0.5)]";
       if (value !== null) {
-        if (value < 20) fillBackground = "var(--error)";
-        else if (value < 50) fillBackground = "var(--warning)";
+        if (value < 20) {
+          batteryFillClass = "bg-warning-red shadow-[0_0_10px_rgba(255,49,49,0.5)]";
+        } else if (value < 50) {
+          batteryFillClass = "bg-temp-orange shadow-[0_0_10px_rgba(255,140,0,0.5)]";
+        }
       }
 
       extraContent = (
-        <div className="battery-battery-bar">
-          <div className="battery-fill" style={{ width: `${value !== null ? value : 0}%`, background: fillBackground }}></div>
+        <div className="mt-4 h-1.5 w-full bg-surface-container rounded-full overflow-hidden p-[1px] border border-glass-border">
+          <div 
+            className={`h-full rounded-full transition-all duration-500 ${batteryFillClass}`}
+            style={{ width: `${value !== null ? Math.min(Math.max(value, 0), 100) : 0}%` }}
+          ></div>
         </div>
       );
       break;
@@ -127,15 +134,15 @@ export default function MetricCard({ type, value, rawValue, statusText, trendTex
   }
 
   return (
-    <div className={cardClass}>
-      <div className="card-icon">
+    <div className="glass-card p-5 flex flex-col justify-between h-full transition-all duration-300 hover:-translate-y-1">
+      <div className="flex items-start justify-between mb-4">
         {icon}
       </div>
-      <div className="card-info">
-        <h3>{title}</h3>
-        <div className="card-value">
-          {valueDisplay}
-          <span className="unit">{unit}</span>
+      <div>
+        <p className="font-label-caps text-label-caps text-on-surface-variant mb-1">{title}</p>
+        <div className="flex items-baseline gap-1">
+          <span className="font-headline-md text-2xl md:text-3xl font-bold text-on-surface">{valueDisplay}</span>
+          <span className="font-data-mono text-xs text-on-surface-variant">{unit}</span>
         </div>
         {extraContent}
       </div>

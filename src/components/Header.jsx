@@ -1,47 +1,78 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 
 export default function Header({ dataSource, setDataSource, toggleModal, isOnline, connectionText }) {
+  const [timeStr, setTimeStr] = useState('');
+
+  // Update clock every second
+  useEffect(() => {
+    const updateTime = () => {
+      const now = new Date();
+      setTimeStr(now.toLocaleTimeString('vi-VN', { hour12: false }));
+    };
+    updateTime();
+    const intervalId = setInterval(updateTime, 1000);
+    return () => clearInterval(intervalId);
+  }, []);
+
   return (
-    <header className="main-header">
-      <div className="header-logo">
-        <div className="logo-icon">
-          <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" strokeWidth="2.5">
-            <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41" strokeLinecap="round"/>
-            <circle cx="12" cy="12" r="4" fill="currentColor"/>
-          </svg>
-        </div>
-        <div className="logo-text">
-          <h1>WEATHER <span>STATION</span></h1>
-          <p>Hệ thống giám sát cây trồng & Hỗ trợ canh tác thông minh</p>
+    <nav className="fixed top-0 left-0 w-full z-50 flex justify-between items-center px-6 md:px-8 py-4 bg-background/85 backdrop-blur-xl border-b border-glass-border shadow-none">
+      {/* Left logo & Status */}
+      <div className="flex items-center gap-4">
+        <span className="font-headline-md text-xl md:text-2xl font-bold tracking-tighter text-air-quality-green uppercase">
+          WEATHER <span className="text-temp-orange">STATION</span>
+        </span>
+        <div className="hidden md:flex items-center gap-2 px-3 py-1 bg-surface-container rounded-full border border-glass-border">
+          <span className={`w-2 h-2 rounded-full ${isOnline ? 'bg-air-quality-green animate-pulse neon-glow-green' : 'bg-warning-red'}`}></span>
+          <span className="font-label-caps text-[10px] text-on-surface-variant uppercase">
+            {connectionText}
+          </span>
         </div>
       </div>
-      
-      <div className="header-actions">
-        <div className="connection-status">
-          <span className={`status-dot ${isOnline ? 'online' : 'offline'}`}></span>
-          <span className="status-text">{connectionText}</span>
-        </div>
-        <div className="mode-selector">
-          <button 
-            className={`mode-btn ${dataSource === 'cloud' ? 'active' : ''}`} 
-            onClick={() => setDataSource('cloud')}
-          >
-            Cloud (ThingSpeak)
-          </button>
-          <button 
-            className={`mode-btn ${dataSource === 'local' ? 'active' : ''}`} 
-            onClick={() => setDataSource('local')}
-          >
-            Local (ESP8266)
-          </button>
-        </div>
-        <button className="icon-btn" onClick={() => toggleModal(true)} title="Cấu hình hệ thống">
-          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <circle cx="12" cy="12" r="3"></circle>
-            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
-          </svg>
+
+      {/* Center Data Source Switcher */}
+      <div className="flex bg-surface-container-lowest/50 border border-glass-border rounded-full p-1 gap-1">
+        <button
+          className={`px-3 py-1 text-[11px] font-semibold rounded-full transition-all duration-200 ${
+            dataSource === 'cloud'
+              ? 'bg-glass-fill text-on-surface border border-glass-border shadow-sm font-bold'
+              : 'text-on-surface-variant hover:text-on-surface'
+          }`}
+          onClick={() => setDataSource('cloud')}
+        >
+          Cloud (ThingSpeak)
+        </button>
+        <button
+          className={`px-3 py-1 text-[11px] font-semibold rounded-full transition-all duration-200 ${
+            dataSource === 'local'
+              ? 'bg-glass-fill text-on-surface border border-glass-border shadow-sm font-bold'
+              : 'text-on-surface-variant hover:text-on-surface'
+          }`}
+          onClick={() => setDataSource('local')}
+        >
+          Local (ESP8266)
         </button>
       </div>
-    </header>
+
+      {/* Right actions & Clock */}
+      <div className="flex items-center gap-4">
+        <span className="font-data-mono text-sm text-on-surface-variant hidden lg:block">
+          {timeStr}
+        </span>
+        <button 
+          className="p-2 rounded-full hover:bg-glass-fill transition-all active:scale-95 duration-200 relative"
+          title="Thông báo"
+        >
+          <span className="material-symbols-outlined text-primary text-xl">notifications</span>
+          {isOnline && <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-temp-orange rounded-full"></span>}
+        </button>
+        <button 
+          className="p-2 rounded-full hover:bg-glass-fill transition-all active:scale-95 duration-200"
+          onClick={() => toggleModal(true)}
+          title="Cấu hình hệ thống"
+        >
+          <span className="material-symbols-outlined text-primary text-xl">settings</span>
+        </button>
+      </div>
+    </nav>
   );
 }

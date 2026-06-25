@@ -38,41 +38,26 @@ export default function LocalEngine({ historyData, rainValue }) {
   
   const n = tempHistory.length;
   
-  // Return early if not enough data points
-  if (n < 5) {
-    return (
-      <div className="glass-card forecast-card">
-        <div className="card-header">
-          <div className="header-title">
-            <div className="spark-icon">⚡</div>
-            <h2>Dự Báo Cây Trồng AI Cục Bộ (Hồi Quy)</h2>
-          </div>
-          <span className="engine-badge">JS Engine v1.0</span>
-        </div>
-        <div className="recommendation-box" style={{ marginTop: '16px' }}>
-          <div className="rec-icon">💡</div>
-          <div className="rec-content">
-            <h4>💡 Đang tích lũy dữ liệu:</h4>
-            <p>Đang chờ thu thập đủ dữ liệu khí tượng cục bộ (Đã có {n}/5 điểm dữ liệu)...</p>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  // Calculate regressions
-  const regTemp = calculateLinearRegression(tempHistory);
-  const regHum = calculateLinearRegression(humHistory);
-  const regPres = calculateLinearRegression(presHistory);
-
-  // Helper to render trend badges
+  // Helper to render trend badges matching Stitch styles
   const renderTrendBadge = (slope, threshold) => {
     if (slope > threshold) {
-      return <span className="pred-trend trend-up">Tăng 📈</span>;
+      return (
+        <span className="px-2 py-0.5 bg-error-container/20 border border-error-container/50 text-error rounded text-[10px] font-bold font-data-mono">
+          Tăng 📈
+        </span>
+      );
     } else if (slope < -threshold) {
-      return <span className="pred-trend trend-down">Giảm 📉</span>;
+      return (
+        <span className="px-2 py-0.5 bg-humidity-cyan/10 border border-humidity-cyan/20 text-humidity-cyan rounded text-[10px] font-bold font-data-mono">
+          Giảm 📉
+        </span>
+      );
     } else {
-      return <span className="pred-trend trend-stable">Ổn định ➔</span>;
+      return (
+        <span className="px-2 py-0.5 bg-air-quality-green/10 border border-air-quality-green/20 text-air-quality-green rounded text-[10px] font-bold font-data-mono">
+          Ổn định ➔
+        </span>
+      );
     }
   };
 
@@ -91,59 +76,90 @@ export default function LocalEngine({ historyData, rainValue }) {
     }
   };
 
+  if (n < 5) {
+    return (
+      <div className="glass-card p-6 relative overflow-hidden">
+        <div className="flex justify-between items-start mb-6">
+          <div className="flex items-center gap-2">
+            <span className="material-symbols-outlined text-temp-orange text-xl">bolt</span>
+            <h3 className="font-headline-sm text-lg font-bold text-on-surface">Dự Báo Cây Trồng AI Cục Bộ (Hồi Quy)</h3>
+          </div>
+          <span className="font-data-mono text-xs text-on-surface-variant border border-glass-border px-3 py-1 rounded-full">JS Engine v1.0</span>
+        </div>
+        <div className="bg-temp-orange/5 border border-temp-orange/20 p-4 rounded-lg flex items-start gap-3">
+          <span className="material-symbols-outlined text-temp-orange">lightbulb</span>
+          <div>
+            <h4 className="font-bold text-temp-orange text-sm mb-1">Đang tích lũy dữ liệu:</h4>
+            <p className="text-sm text-on-surface-variant">Đang chờ thu thập đủ dữ liệu khí tượng cục bộ (Đã có {n}/5 điểm dữ liệu)...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Calculate regressions
+  const regTemp = calculateLinearRegression(tempHistory);
+  const regHum = calculateLinearRegression(humHistory);
+  const regPres = calculateLinearRegression(presHistory);
   const recText = generateRecommendation(regTemp.a, regHum.a, regPres.a);
 
   return (
-    <div className="glass-card forecast-card">
-      <div className="card-header">
-        <div className="header-title">
-          <div className="spark-icon">⚡</div>
-          <h2>Dự Báo Cây Trồng AI Cục Bộ (Hồi Quy)</h2>
-        </div>
-        <span className="engine-badge">JS Engine v1.0</span>
+    <div className="glass-card p-6 relative overflow-hidden">
+      {/* Decorative background brain symbol */}
+      <div className="absolute right-0 top-0 opacity-5 pointer-events-none">
+        <span className="material-symbols-outlined text-[150px]">psychology</span>
       </div>
-      
-      <div className="forecast-grid">
-        <div className="prediction-box">
-          <div className="pred-item">
-            <span className="pred-label">Nhiệt độ dự tính (+1h)</span>
-            <span className="pred-val">{regTemp.predictNext.toFixed(1)} °C</span>
+
+      {/* Title & Badge */}
+      <div className="flex justify-between items-start mb-6">
+        <div className="flex items-center gap-2">
+          <span className="material-symbols-outlined text-temp-orange text-xl">bolt</span>
+          <h3 className="font-headline-sm text-lg font-bold text-on-surface">Dự Báo Cây Trồng AI Cục Bộ (Hồi Quy)</h3>
+        </div>
+        <span className="font-data-mono text-xs text-on-surface-variant border border-glass-border px-3 py-1 rounded-full">JS Engine v1.0</span>
+      </div>
+
+      {/* Grid Layout for Insights */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 relative z-10">
+        
+        {/* Left Column: Predictions table */}
+        <div className="space-y-3">
+          <div className="flex items-center justify-between bg-surface-container/40 p-3 rounded-lg border border-glass-border">
+            <span className="font-data-mono text-[11px] md:text-xs text-on-surface-variant">Nhiệt độ dự tính (+1h)</span>
+            <span className="font-data-mono font-bold text-sm text-on-surface">{regTemp.predictNext.toFixed(1)} °C</span>
             {renderTrendBadge(regTemp.a, 0.05)}
           </div>
-          <div className="pred-item">
-            <span className="pred-label">Độ ẩm dự tính (+1h)</span>
-            <span className="pred-val">{regHum.predictNext.toFixed(1)} %</span>
+          <div className="flex items-center justify-between bg-surface-container/40 p-3 rounded-lg border border-glass-border">
+            <span className="font-data-mono text-[11px] md:text-xs text-on-surface-variant">Độ ẩm dự tính (+1h)</span>
+            <span className="font-data-mono font-bold text-sm text-on-surface">{regHum.predictNext.toFixed(1)} %</span>
             {renderTrendBadge(regHum.a, 0.1)}
           </div>
-          <div className="pred-item">
-            <span className="pred-label">Áp suất dự tính (+1h)</span>
-            <span className="pred-val">{regPres.predictNext.toFixed(1)} hPa</span>
+          <div className="flex items-center justify-between bg-surface-container/40 p-3 rounded-lg border border-glass-border">
+            <span className="font-data-mono text-[11px] md:text-xs text-on-surface-variant">Áp suất dự tính (+1h)</span>
+            <span className="font-data-mono font-bold text-sm text-on-surface">{regPres.predictNext.toFixed(1)} hPa</span>
             {renderTrendBadge(regPres.a, 0.05)}
           </div>
         </div>
 
-        <div className="regression-math-box">
-          <h3>Phương trình xu hướng canh tác:</h3>
-          <div className="math-formula">
-            T(t) = {regTemp.a.toFixed(2)} * t {regTemp.b >= 0 ? '+' : '-'} {Math.abs(regTemp.b).toFixed(2)}
+        {/* Right Column: Recommendations & Equations */}
+        <div className="flex flex-col justify-between">
+          <div className="bg-surface-container/30 p-4 rounded-lg border border-glass-border font-data-mono text-[11px] text-on-tertiary-container mb-4 space-y-1">
+            <p className="mb-2 uppercase font-bold text-on-surface-variant">Phương trình xu hướng canh tác:</p>
+            <p>T(t) = {regTemp.a.toFixed(2)} * t {regTemp.b >= 0 ? '+' : '-'} {Math.abs(regTemp.b).toFixed(2)}</p>
+            <p>H(t) = {regHum.a.toFixed(2)} * t {regHum.b >= 0 ? '+' : '-'} {Math.abs(regHum.b).toFixed(2)}</p>
+            <p>P(t) = {regPres.a.toFixed(2)} * t {regPres.b >= 0 ? '+' : '-'} {Math.abs(regPres.b).toFixed(2)}</p>
           </div>
-          <div className="math-formula">
-            H(t) = {regHum.a.toFixed(2)} * t {regHum.b >= 0 ? '+' : '-'} {Math.abs(regHum.b).toFixed(2)}
-          </div>
-          <div className="math-formula">
-            P(t) = {regPres.a.toFixed(2)} * t {regPres.b >= 0 ? '+' : '-'} {Math.abs(regPres.b).toFixed(2)}
+          <div className="bg-temp-orange/5 border border-temp-orange/20 p-4 rounded-lg">
+            <div className="flex items-start gap-3">
+              <span className="material-symbols-outlined text-temp-orange text-xl mt-0.5">lightbulb</span>
+              <div>
+                <h4 className="font-bold text-temp-orange text-sm mb-1">Khuyên dùng cho canh tác &amp; tưới tiêu:</h4>
+                <p className="text-xs text-on-surface-variant leading-relaxed">{recText}</p>
+              </div>
+            </div>
           </div>
         </div>
-      </div>
 
-      <hr className="card-divider" />
-
-      <div className="recommendation-box">
-        <div className="rec-icon">💡</div>
-        <div className="rec-content">
-          <h4>💡 Khuyên dùng cho canh tác & tưới tiêu:</h4>
-          <p>{recText}</p>
-        </div>
       </div>
     </div>
   );

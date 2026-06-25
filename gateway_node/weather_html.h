@@ -1,4 +1,4 @@
-#ifndef WEATHER_HTML_H
+﻿#ifndef WEATHER_HTML_H
 #define WEATHER_HTML_H
 
 const char htmlPage[] PROGMEM = R"rawliteral(
@@ -11,7 +11,7 @@ const char htmlPage[] PROGMEM = R"rawliteral(
   <!-- Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Sora:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
   <!-- Chart.js CDN -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
@@ -20,34 +20,34 @@ const char htmlPage[] PROGMEM = R"rawliteral(
        WEATHER STATION PRO - CSS STYLES (BALANCED LAYOUT)
        ========================================================================== */
     :root {
-      /* Color Palette */
-      --bg-primary: #080c14;
-      --bg-secondary: #0f1422;
-      --card-bg: rgba(22, 29, 49, 0.65);
-      --card-border: rgba(255, 255, 255, 0.06);
+      /* Deep Space Weather Palette */
+      --bg-primary: #131314;
+      --bg-secondary: #0e0e0f;
+      --card-bg: rgba(255, 255, 255, 0.03);
+      --card-border: rgba(255, 255, 255, 0.12);
       
-      --text-primary: #f8fafc;
-      --text-secondary: #94a3b8;
-      --text-muted: #64748b;
+      --text-primary: #e5e2e3;
+      --text-secondary: #c7c6cd;
+      --text-muted: #909097;
       
-      --accent-temp: #f97316;
-      --accent-temp-gradient: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
-      --accent-hum: #38bdf8;
-      --accent-hum-gradient: linear-gradient(135deg, #38bdf8 0%, #0284c7 100%);
-      --accent-pres: #a855f7;
-      --accent-pres-gradient: linear-gradient(135deg, #a855f7 0%, #7e22ce 100%);
-      --accent-rain: #10b981;
-      --accent-rain-gradient: linear-gradient(135deg, #10b981 0%, #059669 100%);
-      --accent-bat: #14b8a6;
-      --accent-bat-gradient: linear-gradient(135deg, #14b8a6 0%, #0d9488 100%);
+      --accent-temp: #FF8C00;
+      --accent-temp-gradient: linear-gradient(135deg, #FF8C00 0%, #d97706 100%);
+      --accent-hum: #00F2FF;
+      --accent-hum-gradient: linear-gradient(135deg, #00F2FF 0%, #008fa3 100%);
+      --accent-pres: #00FF94;
+      --accent-pres-gradient: linear-gradient(135deg, #00FF94 0%, #00b368 100%);
+      --accent-rain: #00F2FF;
+      --accent-rain-gradient: linear-gradient(135deg, #00F2FF 0%, #008fa3 100%);
+      --accent-bat: #00FF94;
+      --accent-bat-gradient: linear-gradient(135deg, #00FF94 0%, #00b368 100%);
       
-      --success: #22c55e;
+      --success: #00FF94;
       --warning: #eab308;
-      --error: #ef4444;
+      --error: #FF3131;
       
       /* Fonts */
-      --font-display: 'Outfit', sans-serif;
-      --font-body: 'Plus Jakarta Sans', sans-serif;
+      --font-display: 'Sora', sans-serif;
+      --font-body: 'Inter', sans-serif;
     }
 
     * {
@@ -376,12 +376,30 @@ const char htmlPage[] PROGMEM = R"rawliteral(
       display: flex;
       align-items: center;
       gap: 8px;
-      background: rgba(255, 255, 255, 0.04);
-      border: 1px solid rgba(255, 255, 255, 0.06);
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.08);
       padding: 6px 12px;
       border-radius: 8px;
       font-size: 11px;
       font-weight: 600;
+    }
+
+    .hero-badge.badge-temp {
+      border-color: rgba(255, 140, 0, 0.2);
+      background: rgba(255, 140, 0, 0.04);
+      color: #ffa133;
+    }
+    
+    .hero-badge.badge-rain {
+      border-color: rgba(0, 242, 255, 0.2);
+      background: rgba(0, 242, 255, 0.04);
+      color: #33f5ff;
+    }
+    
+    .hero-badge.badge-status {
+      border-color: rgba(0, 255, 148, 0.2);
+      background: rgba(0, 255, 148, 0.04);
+      color: #33ffaa;
     }
 
     .badge-icon {
@@ -415,9 +433,10 @@ const char htmlPage[] PROGMEM = R"rawliteral(
       background: var(--card-bg);
       border: 1px solid var(--card-border);
       border-radius: 24px;
-      backdrop-filter: blur(12px);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
       padding: 24px;
-      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
       transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275), border-color 0.2s, box-shadow 0.3s;
     }
 
@@ -470,17 +489,21 @@ const char htmlPage[] PROGMEM = R"rawliteral(
     .bat-theme .card-icon { background: rgba(20, 184, 166, 0.08); color: var(--accent-bat); }
 
     .card-info h3 {
-      font-size: 13px;
-      color: var(--text-secondary);
-      font-weight: 500;
-      margin-bottom: 2px;
+      font-family: var(--font-body);
+      font-size: 12px;
+      font-weight: 700;
+      line-height: 16px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-bottom: 4px;
     }
 
     .card-value {
       font-family: var(--font-display);
       font-size: 28px;
-      font-weight: 700;
-      line-height: 1.1;
+      font-weight: 600;
+      line-height: 36px;
     }
 
     .card-value .unit {
@@ -718,10 +741,34 @@ const char htmlPage[] PROGMEM = R"rawliteral(
       white-space: nowrap;
     }
 
-    .chart-tab.active {
+    .chart-tab.tab-temp.active {
       background: var(--accent-temp-gradient);
       color: var(--text-primary);
-      box-shadow: 0 3px 8px rgba(249, 115, 22, 0.25);
+      box-shadow: 0 3px 8px rgba(255, 140, 0, 0.3);
+    }
+    
+    .chart-tab.tab-hum.active {
+      background: var(--accent-hum-gradient);
+      color: var(--text-primary);
+      box-shadow: 0 3px 8px rgba(0, 242, 255, 0.3);
+    }
+    
+    .chart-tab.tab-pres.active {
+      background: var(--accent-pres-gradient);
+      color: var(--text-primary);
+      box-shadow: 0 3px 8px rgba(0, 255, 148, 0.3);
+    }
+    
+    .chart-tab.tab-rain.active {
+      background: var(--accent-rain-gradient);
+      color: var(--text-primary);
+      box-shadow: 0 3px 8px rgba(0, 242, 255, 0.3);
+    }
+    
+    .chart-tab.tab-bat.active {
+      background: var(--accent-bat-gradient);
+      color: var(--text-primary);
+      box-shadow: 0 3px 8px rgba(0, 255, 148, 0.3);
     }
 
     .chart-wrapper {
@@ -925,17 +972,17 @@ const char htmlPage[] PROGMEM = R"rawliteral(
       transform: translateX(-50%);
       background: var(--error);
       color: white;
-      padding: 12px 24px;
-      border-radius: 30px;
+      padding: 14px 28px;
+      border-radius: 16px;
       display: flex;
       align-items: center;
-      gap: 10px;
-      box-shadow: 0 8px 25px rgba(239, 68, 68, 0.4);
+      gap: 12px;
+      box-shadow: 0 8px 30px rgba(255, 49, 49, 0.4);
       font-weight: 700;
       font-size: 13px;
       z-index: 1000;
       animation: slide-up 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.15);
     }
 
     .alert-banner.hidden {
@@ -1013,20 +1060,20 @@ const char htmlPage[] PROGMEM = R"rawliteral(
         </div>
         <div class="logo-text">
           <h1>WEATHER <span>STATION</span></h1>
-          <p>Hệ thống giám sát cây trồng & Hỗ trợ canh tác thông minh</p>
+          <p>Há»‡ thá»‘ng giÃ¡m sÃ¡t cÃ¢y trá»“ng & Há»— trá»£ canh tÃ¡c thÃ´ng minh</p>
         </div>
       </div>
       
       <div class="header-actions">
         <div class="connection-status">
           <span class="status-dot online" id="statusDot"></span>
-          <span class="status-text" id="statusText">Đang kết nối...</span>
+          <span class="status-text" id="statusText">Äang káº¿t ná»‘i...</span>
         </div>
         <div class="mode-selector">
           <button class="mode-btn active" id="btnCloud" onclick="setDataSource('cloud')">Cloud (ThingSpeak)</button>
           <button class="mode-btn" id="btnLocal" onclick="setDataSource('local')">Local (ESP8266)</button>
         </div>
-        <button class="icon-btn" id="btnSettings" onclick="toggleModal('settingsModal', true)" title="Cấu hình hệ thống">
+        <button class="icon-btn" id="btnSettings" onclick="toggleModal('settingsModal', true)" title="Cáº¥u hÃ¬nh há»‡ thá»‘ng">
           <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <circle cx="12" cy="12" r="3"></circle>
             <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
@@ -1042,15 +1089,15 @@ const char htmlPage[] PROGMEM = R"rawliteral(
         <span class="meta-value" id="rssiValue">-- dBm</span>
       </div>
       <div class="meta-item border-left">
-        <span class="meta-label">Mã Gói (Seq):</span>
+        <span class="meta-label">MÃ£ GÃ³i (Seq):</span>
         <span class="meta-value" id="seqNum">--</span>
       </div>
       <div class="meta-item border-left">
-        <span class="meta-label">Cập nhật lần cuối:</span>
+        <span class="meta-label">Cáº­p nháº­t láº§n cuá»‘i:</span>
         <span class="meta-value" id="lastUpdated">--</span>
       </div>
       <div class="meta-item border-left flex-grow">
-        <span class="meta-label">Nguồn cấp:</span>
+        <span class="meta-label">Nguá»“n cáº¥p:</span>
         <span class="meta-value" id="stationModeText">ThingSpeak Channel</span>
       </div>
     </div>
@@ -1068,31 +1115,31 @@ const char htmlPage[] PROGMEM = R"rawliteral(
           </div>
         </div>
         <div class="weather-info">
-          <span class="weather-status-tag" id="weatherStatusTag">Khí tượng canh tác</span>
-          <div class="weather-summary-text" id="weatherSummary">Đang lấy dữ liệu cảm biến...</div>
+          <span class="weather-status-tag" id="weatherStatusTag">KhÃ­ tÆ°á»£ng canh tÃ¡c</span>
+          <div class="weather-summary-text" id="weatherSummary">Äang láº¥y dá»¯ liá»‡u cáº£m biáº¿n...</div>
         </div>
       </div>
 
       <div class="hero-right">
         <div class="main-temp-display">
           <span class="temp-number" id="mainTemp">--</span>
-          <span class="temp-unit">°C</span>
+          <span class="temp-unit">Â°C</span>
         </div>
         <div class="hero-badges">
-          <div class="hero-badge">
-            <span class="badge-icon">🤖</span>
-            <span class="badge-label">Python AI dự báo:</span>
-            <span class="badge-value" id="subTemp">-- °C</span>
+          <div class="hero-badge badge-temp">
+            <span class="badge-icon">ðŸ¤–</span>
+            <span class="badge-label">Python AI dá»± bÃ¡o:</span>
+            <span class="badge-value" id="subTemp">-- Â°C</span>
           </div>
-          <div class="hero-badge">
-            <span class="badge-icon">⛈️</span>
-            <span class="badge-label">Xác suất mưa:</span>
+          <div class="hero-badge badge-rain">
+            <span class="badge-icon">â›ˆï¸</span>
+            <span class="badge-label">XÃ¡c suáº¥t mÆ°a:</span>
             <span class="badge-value" id="subRain">--%</span>
           </div>
-          <div class="hero-badge">
-            <span class="badge-icon" id="aiStatusIcon">🤖</span>
-            <span class="badge-label">Dự kiến (+1h):</span>
-            <span class="badge-value" id="aiStatusText">Đang tính...</span>
+          <div class="hero-badge badge-status">
+            <span class="badge-icon" id="aiStatusIcon">ðŸ¤–</span>
+            <span class="badge-label">Dá»± kiáº¿n (+1h):</span>
+            <span class="badge-value" id="aiStatusText">Äang tÃ­nh...</span>
           </div>
         </div>
       </div>
@@ -1113,7 +1160,7 @@ const char htmlPage[] PROGMEM = R"rawliteral(
               </svg>
             </div>
             <div class="card-info">
-              <h3>Độ Ẩm Không Khí</h3>
+              <h3>Äá»™ áº¨m KhÃ´ng KhÃ­</h3>
               <div class="card-value"><span id="valHumidity">--</span><span class="unit">%</span></div>
               <div class="progress-bar-container">
                 <div class="progress-bar" id="barHumidity" style="width: 0%"></div>
@@ -1131,7 +1178,7 @@ const char htmlPage[] PROGMEM = R"rawliteral(
               </svg>
             </div>
             <div class="card-info">
-              <h3>Áp Suất Khí Quyển</h3>
+              <h3>Ãp Suáº¥t KhÃ­ Quyá»ƒn</h3>
               <div class="card-value"><span id="valPressure">--</span><span class="unit">hPa</span></div>
               <div class="card-subtext" id="subPressure">Trend: --</div>
               <div style="margin-top: 4px;"><span class="pressure-badge" id="badgePressure">--</span></div>
@@ -1149,9 +1196,9 @@ const char htmlPage[] PROGMEM = R"rawliteral(
               </svg>
             </div>
             <div class="card-info">
-              <h3>Lượng Mưa & Tưới Tiêu</h3>
+              <h3>LÆ°á»£ng MÆ°a & TÆ°á»›i TiÃªu</h3>
               <div class="card-value"><span id="valRain">--</span><span class="unit">/1023</span></div>
-              <span class="rain-status-text" id="statusRain">Đang đọc...</span>
+              <span class="rain-status-text" id="statusRain">Äang Ä‘á»c...</span>
             </div>
           </div>
 
@@ -1164,7 +1211,7 @@ const char htmlPage[] PROGMEM = R"rawliteral(
               </svg>
             </div>
             <div class="card-info">
-              <h3>Pin Trạm Khí Tượng</h3>
+              <h3>Pin Tráº¡m KhÃ­ TÆ°á»£ng</h3>
               <div class="card-value"><span id="valBattery">--</span><span class="unit">%</span></div>
               <div class="battery-battery-bar">
                 <div class="battery-fill" id="barBattery" style="width: 0%"></div>
@@ -1177,25 +1224,25 @@ const char htmlPage[] PROGMEM = R"rawliteral(
         <div class="glass-card matlab-chart-card">
           <div class="card-header">
             <div class="header-title">
-              <span class="spark-icon">🤖</span>
-              <h2>Mô Hình Học Máy Python AI</h2>
+              <span class="spark-icon">ðŸ¤–</span>
+              <h2>MÃ´ HÃ¬nh Há»c MÃ¡y Python AI</h2>
             </div>
             <span class="engine-badge" style="background: rgba(16, 185, 129, 0.12); color: var(--accent-rain); border-color: rgba(16, 185, 129, 0.2)">Random Forest</span>
           </div>
           <div class="ml-metrics-container" style="padding: 12px; background: rgba(0, 0, 0, 0.2); border-radius: 16px; border: 1px solid rgba(255, 255, 255, 0.05); height: 290px; display: flex; flex-direction: column; justify-content: center; gap: 14px;">
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
               <div style="background: rgba(255,255,255,0.03); padding: 12px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.02); text-align: center;">
-                <div style="font-size: 10px; color: var(--text-secondary); margin-bottom: 4px;">Sai số Nhiệt độ (MAE)</div>
-                <div style="font-size: 18px; font-weight: 700; color: var(--accent-temp);">±0.45 °C</div>
+                <div style="font-size: 10px; color: var(--text-secondary); margin-bottom: 4px;">Sai sá»‘ Nhiá»‡t Ä‘á»™ (MAE)</div>
+                <div style="font-size: 18px; font-weight: 700; color: var(--accent-temp);">Â±0.45 Â°C</div>
               </div>
               <div style="background: rgba(255,255,255,0.03); padding: 12px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.02); text-align: center;">
-                <div style="font-size: 10px; color: var(--text-secondary); margin-bottom: 4px;">Độ chính xác AI (Acc)</div>
+                <div style="font-size: 10px; color: var(--text-secondary); margin-bottom: 4px;">Äá»™ chÃ­nh xÃ¡c AI (Acc)</div>
                 <div style="font-size: 18px; font-weight: 700; color: var(--accent-rain);">95.2%</div>
               </div>
             </div>
             <div style="font-size: 12px; color: var(--text-secondary); line-height: 1.5; padding: 0 4px;">
-              <p>🤖 <b>Mô hình dự báo:</b> Sử dụng thuật toán Random Forest hồi quy (cho Temp/Hum) và phân loại (cho Weather Code) để dự đoán chu kỳ tiếp theo.</p>
-              <p style="margin-top: 8px;">📍 <b>Cập nhật:</b> Chạy tự động mỗi 30 phút qua GitHub Actions và đẩy dữ liệu lên ThingSpeak Cloud.</p>
+              <p>ðŸ¤– <b>MÃ´ hÃ¬nh dá»± bÃ¡o:</b> Sá»­ dá»¥ng thuáº­t toÃ¡n Random Forest há»“i quy (cho Temp/Hum) vÃ  phÃ¢n loáº¡i (cho Weather Code) Ä‘á»ƒ dá»± Ä‘oÃ¡n chu ká»³ tiáº¿p theo.</p>
+              <p style="margin-top: 8px;">ðŸ“ <b>Cáº­p nháº­t:</b> Cháº¡y tá»± Ä‘á»™ng má»—i 30 phÃºt qua GitHub Actions vÃ  Ä‘áº©y dá»¯ liá»‡u lÃªn ThingSpeak Cloud.</p>
             </div>
             <div style="display: flex; gap: 8px; flex-wrap: wrap; padding: 0 4px;">
               <span style="font-size: 10px; padding: 4px 8px; background: rgba(249, 115, 22, 0.1); color: var(--accent-temp); border: 1px solid rgba(249, 115, 22, 0.2); border-radius: 6px;">RF Regressors</span>
@@ -1212,14 +1259,14 @@ const char htmlPage[] PROGMEM = R"rawliteral(
         <!-- CHART.JS CARD -->
         <div class="glass-card chart-container-card">
           <div class="chart-header">
-            <h2>Biểu Đồ Khí Hậu Canh Tác (8 Kênh)</h2>
+            <h2>Biá»ƒu Äá»“ KhÃ­ Háº­u Canh TÃ¡c (8 KÃªnh)</h2>
             <div class="chart-tabs-wrapper">
               <div class="chart-tabs">
-                <button class="chart-tab active" onclick="switchChart('temp')">Nhiệt Độ Canh Tác</button>
-                <button class="chart-tab" onclick="switchChart('hum')">Độ Ẩm Đất/Khí</button>
-                <button class="chart-tab" onclick="switchChart('pres')">Khí Áp Canh Tác</button>
-                <button class="chart-tab" onclick="switchChart('rain')">Lượng Mưa</button>
-                <button class="chart-tab" onclick="switchChart('bat')">Nguồn Điện (Pin)</button>
+                <button class="chart-tab tab-temp active" onclick="switchChart('temp')">Nhiá»‡t Äá»™ Canh TÃ¡c</button>
+                <button class="chart-tab tab-hum" onclick="switchChart('hum')">Äá»™ áº¨m Äáº¥t/KhÃ­</button>
+                <button class="chart-tab tab-pres" onclick="switchChart('pres')">KhÃ­ Ãp Canh TÃ¡c</button>
+                <button class="chart-tab tab-rain" onclick="switchChart('rain')">LÆ°á»£ng MÆ°a</button>
+                <button class="chart-tab tab-bat" onclick="switchChart('bat')">Nguá»“n Äiá»‡n (Pin)</button>
               </div>
             </div>
           </div>
@@ -1232,8 +1279,8 @@ const char htmlPage[] PROGMEM = R"rawliteral(
         <div class="glass-card forecast-card">
           <div class="card-header">
             <div class="header-title">
-              <div class="spark-icon">⚡</div>
-              <h2>Dự Báo Cây Trồng AI Cục Bộ (Hồi Quy)</h2>
+              <div class="spark-icon">âš¡</div>
+              <h2>Dá»± BÃ¡o CÃ¢y Trá»“ng AI Cá»¥c Bá»™ (Há»“i Quy)</h2>
             </div>
             <span class="engine-badge">JS Engine v1.0</span>
           </div>
@@ -1241,24 +1288,24 @@ const char htmlPage[] PROGMEM = R"rawliteral(
           <div class="forecast-grid">
             <div class="prediction-box">
               <div class="pred-item">
-                <span class="pred-label">Nhiệt độ dự tính (+1h)</span>
-                <span class="pred-val" id="predTemp">-- °C</span>
+                <span class="pred-label">Nhiá»‡t Ä‘á»™ dá»± tÃ­nh (+1h)</span>
+                <span class="pred-val" id="predTemp">-- Â°C</span>
                 <span class="pred-trend" id="trendTemp">--</span>
               </div>
               <div class="pred-item">
-                <span class="pred-label">Độ ẩm dự tính (+1h)</span>
+                <span class="pred-label">Äá»™ áº©m dá»± tÃ­nh (+1h)</span>
                 <span class="pred-val" id="predHum">-- %</span>
                 <span class="pred-trend" id="trendHum">--</span>
               </div>
               <div class="pred-item">
-                <span class="pred-label">Áp suất dự tính (+1h)</span>
+                <span class="pred-label">Ãp suáº¥t dá»± tÃ­nh (+1h)</span>
                 <span class="pred-val" id="predPres">-- hPa</span>
                 <span class="pred-trend" id="trendPres">--</span>
               </div>
             </div>
 
             <div class="regression-math-box">
-              <h3>Phương trình xu hướng canh tác:</h3>
+              <h3>PhÆ°Æ¡ng trÃ¬nh xu hÆ°á»›ng canh tÃ¡c:</h3>
               <div class="math-formula" id="mathTemp">T(t) = -- * t + --</div>
               <div class="math-formula" id="mathHum">H(t) = -- * t + --</div>
               <div class="math-formula" id="mathPres">P(t) = -- * t + --</div>
@@ -1268,10 +1315,10 @@ const char htmlPage[] PROGMEM = R"rawliteral(
           <hr class="card-divider">
 
           <div class="recommendation-box">
-            <div class="rec-icon">💡</div>
+            <div class="rec-icon">ðŸ’¡</div>
             <div class="rec-content">
-              <h4>💡 Khuyên dùng cho canh tác & tưới tiêu:</h4>
-              <p id="systemRecommendation">Đang tính toán mô hình hồi quy dựa trên dữ liệu khí quyển...</p>
+              <h4>ðŸ’¡ KhuyÃªn dÃ¹ng cho canh tÃ¡c & tÆ°á»›i tiÃªu:</h4>
+              <p id="systemRecommendation">Äang tÃ­nh toÃ¡n mÃ´ hÃ¬nh há»“i quy dá»±a trÃªn dá»¯ liá»‡u khÃ­ quyá»ƒn...</p>
             </div>
           </div>
         </div>
@@ -1283,37 +1330,37 @@ const char htmlPage[] PROGMEM = R"rawliteral(
     <div class="modal-overlay" id="settingsModal">
       <div class="modal-card">
         <div class="modal-header">
-          <h2>Cấu Hình Hệ Thống</h2>
+          <h2>Cáº¥u HÃ¬nh Há»‡ Thá»‘ng</h2>
           <button class="close-btn" onclick="toggleModal('settingsModal', false)">&times;</button>
         </div>
         <div class="modal-body">
           <div class="form-group">
             <label for="inputChannelId">ThingSpeak Channel ID</label>
-            <input type="text" id="inputChannelId" placeholder="Ví dụ: 12397">
-            <small>ID của kênh ThingSpeak lưu dữ liệu trạm thời tiết của bạn.</small>
+            <input type="text" id="inputChannelId" placeholder="VÃ­ dá»¥: 12397">
+            <small>ID cá»§a kÃªnh ThingSpeak lÆ°u dá»¯ liá»‡u tráº¡m thá»i tiáº¿t cá»§a báº¡n.</small>
           </div>
           
           <div class="form-group">
             <label for="inputReadApiKey">ThingSpeak Read API Key</label>
-            <input type="password" id="inputReadApiKey" placeholder="Nhập Read API Key (nếu Private)">
-            <small>Cần thiết để tải 8 biểu đồ dữ liệu và chạy phân tích.</small>
+            <input type="password" id="inputReadApiKey" placeholder="Nháº­p Read API Key (náº¿u Private)">
+            <small>Cáº§n thiáº¿t Ä‘á»ƒ táº£i 8 biá»ƒu Ä‘á»“ dá»¯ liá»‡u vÃ  cháº¡y phÃ¢n tÃ­ch.</small>
           </div>
 
           <div class="form-group">
             <label for="inputMatlabId">MATLAB Visualization ID</label>
-            <input type="text" id="inputMatlabId" placeholder="Nhập ID App Visualizations (ví dụ: 45678)">
-            <small>ID của MATLAB Visualizations App để nhúng biểu đồ so sánh từ Cloud.</small>
+            <input type="text" id="inputMatlabId" placeholder="Nháº­p ID App Visualizations (vÃ­ dá»¥: 45678)">
+            <small>ID cá»§a MATLAB Visualizations App Ä‘á»ƒ nhÃºng biá»ƒu Ä‘á»“ so sÃ¡nh tá»« Cloud.</small>
           </div>
 
           <div class="form-group">
             <label for="inputEspIp">ESP8266 Local Gateway IP</label>
-            <input type="text" id="inputEspIp" placeholder="Mặc định: 192.168.4.1">
-            <small>Địa chỉ IP của ESP8266 khi kết nối trực tiếp vào WiFi AP "WeatherStation".</small>
+            <input type="text" id="inputEspIp" placeholder="Máº·c Ä‘á»‹nh: 192.168.4.1">
+            <small>Äá»‹a chá»‰ IP cá»§a ESP8266 khi káº¿t ná»‘i trá»±c tiáº¿p vÃ o WiFi AP "WeatherStation".</small>
           </div>
           
           <div class="modal-actions">
-            <button class="btn btn-secondary" onclick="resetToDemoSettings()">Khôi phục Demo</button>
-            <button class="btn btn-primary" onclick="saveSettings()">Lưu Cấu Hình</button>
+            <button class="btn btn-secondary" onclick="resetToDemoSettings()">KhÃ´i phá»¥c Demo</button>
+            <button class="btn btn-primary" onclick="saveSettings()">LÆ°u Cáº¥u HÃ¬nh</button>
           </div>
         </div>
       </div>
@@ -1321,8 +1368,8 @@ const char htmlPage[] PROGMEM = R"rawliteral(
 
     <!-- ALERT OVERLAYS -->
     <div class="alert-banner hidden" id="alertBox">
-      <span class="alert-icon">⚠</span>
-      <span class="alert-message" id="alertMessage">Cảnh báo: Phát hiện mưa lớn! Khả năng có dông bão nguy hiểm.</span>
+      <span class="alert-icon">âš </span>
+      <span class="alert-message" id="alertMessage">Cáº£nh bÃ¡o: PhÃ¡t hiá»‡n mÆ°a lá»›n! Kháº£ nÄƒng cÃ³ dÃ´ng bÃ£o nguy hiá»ƒm.</span>
     </div>
   </div>
 
@@ -1332,31 +1379,31 @@ const char htmlPage[] PROGMEM = R"rawliteral(
     // WEATHER STATION PRO - CLIENT JAVASCRIPT
     // ==========================================================================
 
-    // --- Cấu hình & Trạng thái mặc định ---
+    // --- Cáº¥u hÃ¬nh & Tráº¡ng thÃ¡i máº·c Ä‘á»‹nh ---
     let config = {
-      channelId: '3413241',        // ID kênh mặc định của bạn
-      readApiKey: 'VISWQT7BABDVZOFS', // Read API Key mặc định của bạn
-      matlabId: '674169',          // MATLAB Visualization ID mặc định của bạn (Không dùng)
-      espIp: '192.168.4.1',        // IP mặc định của Gateway ESP8266 AP
-      dataSource: 'cloud'          // Nguồn dữ liệu: 'cloud' (ThingSpeak) hoặc 'local' (ESP8266)
+      channelId: '3413241',        // ID kÃªnh máº·c Ä‘á»‹nh cá»§a báº¡n
+      readApiKey: 'VISWQT7BABDVZOFS', // Read API Key máº·c Ä‘á»‹nh cá»§a báº¡n
+      matlabId: '674169',          // MATLAB Visualization ID máº·c Ä‘á»‹nh cá»§a báº¡n (KhÃ´ng dÃ¹ng)
+      espIp: '192.168.4.1',        // IP máº·c Ä‘á»‹nh cá»§a Gateway ESP8266 AP
+      dataSource: 'cloud'          // Nguá»“n dá»¯ liá»‡u: 'cloud' (ThingSpeak) hoáº·c 'local' (ESP8266)
     };
 
-    // --- Dữ liệu hiện tại ---
+    // --- Dá»¯ liá»‡u hiá»‡n táº¡i ---
     let currentData = {
       temperature: 0,
       humidity: 0,
       pressure: 0,
       rain: 1023,
       battery: 100,
-      predictedTemp: null,         // field6 (Python AI dự báo nhiệt độ)
-      rainProbability: null,       // field7 (Python AI xác suất mưa %)
-      predictedStatus: null,       // field8 (Python AI mã trạng thái thời tiết 0-2)
+      predictedTemp: null,         // field6 (Python AI dá»± bÃ¡o nhiá»‡t Ä‘á»™)
+      rainProbability: null,       // field7 (Python AI xÃ¡c suáº¥t mÆ°a %)
+      predictedStatus: null,       // field8 (Python AI mÃ£ tráº¡ng thÃ¡i thá»i tiáº¿t 0-2)
       rssi: -70,
       seqNum: 0,
       lastUpdated: null
     };
 
-    // --- Bộ nhớ lịch sử (cho biểu đồ và hồi quy) ---
+    // --- Bá»™ nhá»› lá»‹ch sá»­ (cho biá»ƒu Ä‘á»“ vÃ  há»“i quy) ---
     let historyData = {
       timestamps: [],
       temperature: [],             // field1
@@ -1373,7 +1420,7 @@ const char htmlPage[] PROGMEM = R"rawliteral(
     let activeChartTab = 'temp';   // 'temp', 'hum', 'pres', 'rain', 'bat'
     let fetchInterval = null;
 
-    // KHỞI CHẠY TRANG
+    // KHá»žI CHáº Y TRANG
     document.addEventListener("DOMContentLoaded", () => {
       loadConfig();
       initChart();
@@ -1381,14 +1428,14 @@ const char htmlPage[] PROGMEM = R"rawliteral(
       refreshData();
     });
 
-    // Load config từ localStorage
+    // Load config tá»« localStorage
     function loadConfig() {
       const savedConfig = localStorage.getItem('weather_dashboard_config');
       if (savedConfig) {
         config = JSON.parse(savedConfig);
       }
       
-      // Điền vào form settings
+      // Äiá»n vÃ o form settings
       document.getElementById('inputChannelId').value = config.channelId || '';
       document.getElementById('inputReadApiKey').value = config.readApiKey || '';
       document.getElementById('inputMatlabId').value = config.matlabId || '';
@@ -1397,7 +1444,7 @@ const char htmlPage[] PROGMEM = R"rawliteral(
       updateSourceButtons();
     }
 
-    // Lưu cấu hình
+    // LÆ°u cáº¥u hÃ¬nh
     function saveSettings() {
       config.channelId = document.getElementById('inputChannelId').value.trim();
       config.readApiKey = document.getElementById('inputReadApiKey').value.trim();
@@ -1411,7 +1458,7 @@ const char htmlPage[] PROGMEM = R"rawliteral(
       refreshData();
     }
 
-    // Reset cấu hình về kênh mặc định của bạn
+    // Reset cáº¥u hÃ¬nh vá» kÃªnh máº·c Ä‘á»‹nh cá»§a báº¡n
     function resetToDemoSettings() {
       document.getElementById('inputChannelId').value = '3413241';
       document.getElementById('inputReadApiKey').value = 'VISWQT7BABDVZOFS';
@@ -1454,7 +1501,7 @@ const char htmlPage[] PROGMEM = R"rawliteral(
       }
     }
 
-    // KHỞI TẠO BIỂU ĐỒ (CHART.JS)
+    // KHá»žI Táº O BIá»‚U Äá»’ (CHART.JS)
     function initChart() {
       const ctx = document.getElementById('weatherHistoryChart').getContext('2d');
       
@@ -1465,20 +1512,44 @@ const char htmlPage[] PROGMEM = R"rawliteral(
         rain: ctx.createLinearGradient(0, 0, 0, 250),
         bat: ctx.createLinearGradient(0, 0, 0, 250)
       };
-      chartGradients.temp.addColorStop(0, 'rgba(249, 115, 22, 0.3)');
-      chartGradients.temp.addColorStop(1, 'rgba(249, 115, 22, 0.0)');
+      chartGradients.temp.addColorStop(0, 'rgba(255, 140, 0, 0.12)');
+      chartGradients.temp.addColorStop(1, 'rgba(19, 19, 20, 0.0)');
       
-      chartGradients.hum.addColorStop(0, 'rgba(56, 189, 248, 0.3)');
-      chartGradients.hum.addColorStop(1, 'rgba(56, 189, 248, 0.0)');
+      chartGradients.hum.addColorStop(0, 'rgba(0, 242, 255, 0.12)');
+      chartGradients.hum.addColorStop(1, 'rgba(19, 19, 20, 0.0)');
       
-      chartGradients.pres.addColorStop(0, 'rgba(168, 85, 247, 0.3)');
-      chartGradients.pres.addColorStop(1, 'rgba(168, 85, 247, 0.0)');
+      chartGradients.pres.addColorStop(0, 'rgba(0, 255, 148, 0.12)');
+      chartGradients.pres.addColorStop(1, 'rgba(19, 19, 20, 0.0)');
 
-      chartGradients.rain.addColorStop(0, 'rgba(16, 185, 129, 0.3)');
-      chartGradients.rain.addColorStop(1, 'rgba(16, 185, 129, 0.0)');
+      chartGradients.rain.addColorStop(0, 'rgba(0, 255, 148, 0.12)');
+      chartGradients.rain.addColorStop(1, 'rgba(19, 19, 20, 0.0)');
 
-      chartGradients.bat.addColorStop(0, 'rgba(20, 184, 166, 0.3)');
-      chartGradients.bat.addColorStop(1, 'rgba(20, 184, 166, 0.0)');
+      chartGradients.bat.addColorStop(0, 'rgba(0, 242, 255, 0.12)');
+      chartGradients.bat.addColorStop(1, 'rgba(19, 19, 20, 0.0)');
+
+      // Crosshair Guideline Plugin
+      const verticalLinePlugin = {
+        id: 'verticalLine',
+        afterDraw: (chart) => {
+          if (chart.tooltip?._active && chart.tooltip._active.length) {
+            const activePoint = chart.tooltip._active[0];
+            const ctx = chart.ctx;
+            const x = activePoint.element.x;
+            const topY = chart.scales.y.top;
+            const bottomY = chart.scales.y.bottom;
+            
+            ctx.save();
+            ctx.beginPath();
+            ctx.moveTo(x, topY);
+            ctx.lineTo(x, bottomY);
+            ctx.lineWidth = 1;
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.15)';
+            ctx.setLineDash([4, 4]);
+            ctx.stroke();
+            ctx.restore();
+          }
+        }
+      };
 
       const chartConfigs = {
         type: 'line',
@@ -1486,25 +1557,34 @@ const char htmlPage[] PROGMEM = R"rawliteral(
           labels: [],
           datasets: [
             {
-              label: 'Thực tế',
+              label: 'Thá»±c táº¿',
               data: [],
-              borderColor: '#f97316',
+              borderColor: '#FF8C00',
               backgroundColor: chartGradients.temp,
               fill: true,
-              tension: 0.4,
-              borderWidth: 3,
-              pointBackgroundColor: '#f97316',
-              pointHoverRadius: 6
+              tension: 0.35,
+              borderWidth: 2,
+              pointRadius: 0.5,
+              pointHoverRadius: 6,
+              pointHitRadius: 15,
+              pointBackgroundColor: '#FF8C00',
+              pointBorderColor: 'rgba(255, 255, 255, 0.8)',
+              pointBorderWidth: 1.5
             },
             {
-              label: 'Dự đoán (MATLAB)',
+              label: 'Dá»± Ä‘oÃ¡n (MATLAB)',
               data: [],
               borderColor: '#eab308',
-              borderDash: [4, 4],
+              borderDash: [5, 5],
               fill: false,
-              tension: 0.4,
+              tension: 0.35,
               borderWidth: 2,
-              pointBackgroundColor: '#eab308'
+              pointRadius: 0.5,
+              pointHoverRadius: 6,
+              pointHitRadius: 15,
+              pointBackgroundColor: '#eab308',
+              pointBorderColor: 'rgba(255, 255, 255, 0.8)',
+              pointBorderWidth: 1.5
             }
           ]
         },
@@ -1514,20 +1594,54 @@ const char htmlPage[] PROGMEM = R"rawliteral(
           plugins: {
             legend: { 
               display: true,
-              labels: { color: '#94a3b8', font: { family: 'Plus Jakarta Sans', size: 10 } }
+              position: 'top',
+              align: 'end',
+              labels: { 
+                color: '#c7c6cd', 
+                boxWidth: 8,
+                boxHeight: 8,
+                usePointStyle: true,
+                pointStyle: 'circle',
+                padding: 15,
+                font: { family: 'Sora', size: 11, weight: '500' } 
+              }
+            },
+            tooltip: {
+              backgroundColor: 'rgba(28, 27, 29, 0.95)',
+              titleColor: '#e5e2e3',
+              bodyColor: '#c7c6cd',
+              titleFont: { family: 'Sora', size: 12, weight: '600' },
+              bodyFont: { family: 'Inter', size: 12 },
+              padding: 12,
+              borderColor: 'rgba(255, 255, 255, 0.08)',
+              borderWidth: 1,
+              borderRadius: 10,
+              usePointStyle: true,
+              boxPadding: 6
             }
+          },
+          interaction: {
+            mode: 'index',
+            intersect: false
           },
           scales: {
             x: {
-              grid: { color: 'rgba(255, 255, 255, 0.05)' },
-              ticks: { color: '#94a3b8', font: { family: 'Plus Jakarta Sans', size: 10 } }
+              grid: { color: 'rgba(255, 255, 255, 0.025)', border: { dash: [4, 4], display: false } },
+              ticks: { 
+                color: '#909097', 
+                maxRotation: 0,
+                autoSkip: true,
+                maxTicksLimit: 8,
+                font: { family: 'Inter', size: 10, weight: '500' } 
+              }
             },
             y: {
-              grid: { color: 'rgba(255, 255, 255, 0.05)' },
-              ticks: { color: '#94a3b8', font: { family: 'Plus Jakarta Sans', size: 11 } }
+              grid: { color: 'rgba(255, 255, 255, 0.025)', border: { dash: [4, 4], display: false } },
+              ticks: { color: '#909097', font: { family: 'Inter', size: 11, weight: '500' } }
             }
           }
-        }
+        },
+        plugins: [verticalLinePlugin]
       };
       
       weatherChart = new Chart(ctx, chartConfigs);
@@ -1538,7 +1652,7 @@ const char htmlPage[] PROGMEM = R"rawliteral(
       
       const tabs = document.querySelectorAll('.chart-tab');
       tabs.forEach(tab => {
-        if (tab.getAttribute('onclick').includes(tabName)) {
+        if (tab.classList.contains(`tab-${tabName}`)) {
           tab.classList.add('active');
         } else {
           tab.classList.remove('active');
@@ -1553,74 +1667,81 @@ const char htmlPage[] PROGMEM = R"rawliteral(
       
       const ctx = document.getElementById('weatherHistoryChart').getContext('2d');
       const gradTemp = ctx.createLinearGradient(0, 0, 0, 250);
-      gradTemp.addColorStop(0, 'rgba(249, 115, 22, 0.25)');
-      gradTemp.addColorStop(1, 'rgba(249, 115, 22, 0.0)');
+      gradTemp.addColorStop(0, 'rgba(255, 140, 0, 0.12)');
+      gradTemp.addColorStop(1, 'rgba(19, 19, 20, 0.0)');
 
       const gradHum = ctx.createLinearGradient(0, 0, 0, 250);
-      gradHum.addColorStop(0, 'rgba(56, 189, 248, 0.25)');
-      gradHum.addColorStop(1, 'rgba(56, 189, 248, 0.0)');
+      gradHum.addColorStop(0, 'rgba(0, 242, 255, 0.12)');
+      gradHum.addColorStop(1, 'rgba(19, 19, 20, 0.0)');
 
       const gradPres = ctx.createLinearGradient(0, 0, 0, 250);
-      gradPres.addColorStop(0, 'rgba(168, 85, 247, 0.25)');
-      gradPres.addColorStop(1, 'rgba(168, 85, 247, 0.0)');
+      gradPres.addColorStop(0, 'rgba(0, 255, 148, 0.12)');
+      gradPres.addColorStop(1, 'rgba(19, 19, 20, 0.0)');
 
       const gradRain = ctx.createLinearGradient(0, 0, 0, 250);
-      gradRain.addColorStop(0, 'rgba(16, 185, 129, 0.25)');
-      gradRain.addColorStop(1, 'rgba(16, 185, 129, 0.0)');
+      gradRain.addColorStop(0, 'rgba(0, 255, 148, 0.12)');
+      gradRain.addColorStop(1, 'rgba(19, 19, 20, 0.0)');
 
       const gradBat = ctx.createLinearGradient(0, 0, 0, 250);
-      gradBat.addColorStop(0, 'rgba(20, 184, 166, 0.25)');
-      gradBat.addColorStop(1, 'rgba(20, 184, 166, 0.0)');
+      gradBat.addColorStop(0, 'rgba(0, 242, 255, 0.12)');
+      gradBat.addColorStop(1, 'rgba(19, 19, 20, 0.0)');
       
       weatherChart.data.labels = historyData.timestamps;
 
       if (activeChartTab === 'temp') {
-        weatherChart.data.datasets[0].label = 'Nhiệt độ Thực tế (°C)';
+        weatherChart.data.datasets[0].label = 'Nhiá»‡t Ä‘á»™ Thá»±c táº¿ (Â°C)';
         weatherChart.data.datasets[0].data = historyData.temperature;
-        weatherChart.data.datasets[0].borderColor = '#f97316';
+        weatherChart.data.datasets[0].borderColor = '#FF8C00';
         weatherChart.data.datasets[0].backgroundColor = gradTemp;
+        weatherChart.data.datasets[0].pointBackgroundColor = '#FF8C00';
         weatherChart.data.datasets[0].hidden = false;
         
-        weatherChart.data.datasets[1].label = 'Dự báo Nhiệt độ Python AI (°C)';
+        weatherChart.data.datasets[1].label = 'Dá»± bÃ¡o Nhiá»‡t Ä‘á»™ Python AI (Â°C)';
         weatherChart.data.datasets[1].data = historyData.predictedTemp;
         weatherChart.data.datasets[1].borderColor = '#eab308';
+        weatherChart.data.datasets[1].pointBackgroundColor = '#eab308';
         weatherChart.data.datasets[1].hidden = false;
       } 
       else if (activeChartTab === 'hum') {
-        weatherChart.data.datasets[0].label = 'Độ ẩm (%)';
+        weatherChart.data.datasets[0].label = 'Äá»™ áº©m (%)';
         weatherChart.data.datasets[0].data = historyData.humidity;
-        weatherChart.data.datasets[0].borderColor = '#38bdf8';
+        weatherChart.data.datasets[0].borderColor = '#00F2FF';
         weatherChart.data.datasets[0].backgroundColor = gradHum;
+        weatherChart.data.datasets[0].pointBackgroundColor = '#00F2FF';
         weatherChart.data.datasets[0].hidden = false;
         
         weatherChart.data.datasets[1].hidden = true;
       } 
       else if (activeChartTab === 'pres') {
-        weatherChart.data.datasets[0].label = 'Áp suất khí quyển (hPa)';
+        weatherChart.data.datasets[0].label = 'Ãp suáº¥t khÃ­ quyá»ƒn (hPa)';
         weatherChart.data.datasets[0].data = historyData.pressure;
-        weatherChart.data.datasets[0].borderColor = '#a855f7';
+        weatherChart.data.datasets[0].borderColor = '#00FF94';
         weatherChart.data.datasets[0].backgroundColor = gradPres;
+        weatherChart.data.datasets[0].pointBackgroundColor = '#00FF94';
         weatherChart.data.datasets[0].hidden = false;
         
         weatherChart.data.datasets[1].hidden = true;
       }
       else if (activeChartTab === 'rain') {
-        weatherChart.data.datasets[0].label = 'Lượng Mưa / Chỉ số khô ráo (0-1023)';
+        weatherChart.data.datasets[0].label = 'LÆ°á»£ng MÆ°a / Chá»‰ sá»‘ khÃ´ rÃ¡o (0-1023)';
         weatherChart.data.datasets[0].data = historyData.rain;
-        weatherChart.data.datasets[0].borderColor = '#10b981';
+        weatherChart.data.datasets[0].borderColor = '#00FF94';
         weatherChart.data.datasets[0].backgroundColor = gradRain;
+        weatherChart.data.datasets[0].pointBackgroundColor = '#00FF94';
         weatherChart.data.datasets[0].hidden = false;
         
-        weatherChart.data.datasets[1].label = 'Xác suất mưa Python AI (%)';
+        weatherChart.data.datasets[1].label = 'XÃ¡c suáº¥t mÆ°a Python AI (%)';
         weatherChart.data.datasets[1].data = historyData.rainProbability;
-        weatherChart.data.datasets[1].borderColor = '#06b6d4';
+        weatherChart.data.datasets[1].borderColor = '#00F2FF';
+        weatherChart.data.datasets[1].pointBackgroundColor = '#00F2FF';
         weatherChart.data.datasets[1].hidden = false;
       }
       else if (activeChartTab === 'bat') {
-        weatherChart.data.datasets[0].label = 'Nguồn Pin Trạm Đo (%)';
+        weatherChart.data.datasets[0].label = 'Nguá»“n Pin Tráº¡m Äo (%)';
         weatherChart.data.datasets[0].data = historyData.battery;
-        weatherChart.data.datasets[0].borderColor = '#14b8a6';
+        weatherChart.data.datasets[0].borderColor = '#00F2FF';
         weatherChart.data.datasets[0].backgroundColor = gradBat;
+        weatherChart.data.datasets[0].pointBackgroundColor = '#00F2FF';
         weatherChart.data.datasets[0].hidden = false;
         
         weatherChart.data.datasets[1].hidden = true;
@@ -1629,7 +1750,7 @@ const char htmlPage[] PROGMEM = R"rawliteral(
       weatherChart.update();
     }
 
-    // THU THẬP DỮ LIỆU
+    // THU THáº¬P Dá»® LIá»†U
     function startDataFetching() {
       if (fetchInterval) clearInterval(fetchInterval);
       const intervalTime = (config.dataSource === 'local') ? 2000 : 16000;
@@ -1653,7 +1774,7 @@ const char htmlPage[] PROGMEM = R"rawliteral(
           return response.json();
         })
         .then(data => {
-          updateConnectionStatus(true, "Đang kết nối: Local Gateway OK");
+          updateConnectionStatus(true, "Äang káº¿t ná»‘i: Local Gateway OK");
           
           currentData.temperature = parseFloat(data.temperature);
           currentData.humidity = parseFloat(data.humidity);
@@ -1674,15 +1795,15 @@ const char htmlPage[] PROGMEM = R"rawliteral(
           runLinearRegression();
         })
         .catch(err => {
-          console.warn("Không kết nối được ESP8266 local, chạy mô phỏng...", err);
-          updateConnectionStatus(false, "Mất kết nối Local Gateway. Đang chạy mô phỏng.");
+          console.warn("KhÃ´ng káº¿t ná»‘i Ä‘Æ°á»£c ESP8266 local, cháº¡y mÃ´ phá»ng...", err);
+          updateConnectionStatus(false, "Máº¥t káº¿t ná»‘i Local Gateway. Äang cháº¡y mÃ´ phá»ng.");
           generateMockData();
         });
     }
 
     function fetchFromThingSpeak() {
       if (!config.channelId) {
-        updateConnectionStatus(false, "Chưa điền Channel ID. Đang chạy mô phỏng.");
+        updateConnectionStatus(false, "ChÆ°a Ä‘iá»n Channel ID. Äang cháº¡y mÃ´ phá»ng.");
         generateMockData();
         return;
       }
@@ -1699,10 +1820,10 @@ const char htmlPage[] PROGMEM = R"rawliteral(
         })
         .then(data => {
           if (!data.feeds || data.feeds.length === 0) {
-            throw new Error("Kênh trống.");
+            throw new Error("KÃªnh trá»‘ng.");
           }
           
-          updateConnectionStatus(true, "Đang kết nối: ThingSpeak Cloud OK");
+          updateConnectionStatus(true, "Äang káº¿t ná»‘i: ThingSpeak Cloud OK");
           
           historyData.timestamps = [];
           historyData.temperature = [];
@@ -1714,6 +1835,27 @@ const char htmlPage[] PROGMEM = R"rawliteral(
           historyData.rainProbability = [];
           historyData.pressureTrend = [];
           
+          const getFirstNonNull = (fieldName, fallback) => {
+            for (let i = 0; i < data.feeds.length; i++) {
+              const val = data.feeds[i][fieldName];
+              if (val !== null && val !== undefined && val !== '') {
+                const num = parseFloat(val);
+                if (!isNaN(num)) return num;
+              }
+            }
+            return fallback;
+          };
+
+          const firstVal = {
+            temp: getFirstNonNull('field1', 25),
+            hum: getFirstNonNull('field2', 70),
+            pres: getFirstNonNull('field3', 1010),
+            rain: getFirstNonNull('field4', 1023),
+            bat: getFirstNonNull('field5', 100),
+            predT: getFirstNonNull('field6', null),
+            rainP: getFirstNonNull('field7', null)
+          };
+
           data.feeds.forEach(feed => {
             const date = new Date(feed.created_at);
             const timeStr = `${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
@@ -1721,41 +1863,41 @@ const char htmlPage[] PROGMEM = R"rawliteral(
             // Forward Fill Sensor Values
             let temp = (feed.field1 !== null && feed.field1 !== undefined && feed.field1 !== '') ? parseFloat(feed.field1) : null;
             if (temp === null) {
-              temp = historyData.temperature.length > 0 ? historyData.temperature[historyData.temperature.length - 1] : 0;
+              temp = historyData.temperature.length > 0 ? historyData.temperature[historyData.temperature.length - 1] : firstVal.temp;
             }
             
             let hum = (feed.field2 !== null && feed.field2 !== undefined && feed.field2 !== '') ? parseFloat(feed.field2) : null;
             if (hum === null) {
-              hum = historyData.humidity.length > 0 ? historyData.humidity[historyData.humidity.length - 1] : 0;
+              hum = historyData.humidity.length > 0 ? historyData.humidity[historyData.humidity.length - 1] : firstVal.hum;
             }
             
             let pres = (feed.field3 !== null && feed.field3 !== undefined && feed.field3 !== '') ? parseFloat(feed.field3) : null;
             if (pres === null) {
-              pres = historyData.pressure.length > 0 ? historyData.pressure[historyData.pressure.length - 1] : 0;
+              pres = historyData.pressure.length > 0 ? historyData.pressure[historyData.pressure.length - 1] : firstVal.pres;
             }
             
             let rainVal = (feed.field4 !== null && feed.field4 !== undefined && feed.field4 !== '') ? parseInt(feed.field4) : null;
             if (rainVal === null) {
-              rainVal = historyData.rain.length > 0 ? historyData.rain[historyData.rain.length - 1] : 1023;
+              rainVal = historyData.rain.length > 0 ? historyData.rain[historyData.rain.length - 1] : firstVal.rain;
             }
             
             let bat = (feed.field5 !== null && feed.field5 !== undefined && feed.field5 !== '') ? parseInt(feed.field5) : null;
             if (bat === null) {
-              bat = historyData.battery.length > 0 ? historyData.battery[historyData.battery.length - 1] : 100;
+              bat = historyData.battery.length > 0 ? historyData.battery[historyData.battery.length - 1] : firstVal.bat;
             }
             
             // Forward Fill Python AI values
             let predT = (feed.field6 !== null && feed.field6 !== undefined && feed.field6 !== '') ? parseFloat(feed.field6) : null;
             if (predT === null) {
-              predT = historyData.predictedTemp.length > 0 ? historyData.predictedTemp[historyData.predictedTemp.length - 1] : null;
+              predT = historyData.predictedTemp.length > 0 ? historyData.predictedTemp[historyData.predictedTemp.length - 1] : firstVal.predT;
             }
             
             let rainP = (feed.field7 !== null && feed.field7 !== undefined && feed.field7 !== '') ? parseFloat(feed.field7) : null;
             if (rainP === null) {
-              rainP = historyData.rainProbability.length > 0 ? historyData.rainProbability[historyData.rainProbability.length - 1] : null;
+              rainP = historyData.rainProbability.length > 0 ? historyData.rainProbability[historyData.rainProbability.length - 1] : firstVal.rainP;
             }
             
-            // Tính toán trạng thái thời tiết dự tính động dựa trên xác suất mưa (field7) và độ ẩm (field2)
+            // TÃ­nh toÃ¡n tráº¡ng thÃ¡i thá»i tiáº¿t dá»± tÃ­nh Ä‘á»™ng dá»±a trÃªn xÃ¡c suáº¥t mÆ°a (field7) vÃ  Ä‘á»™ áº©m (field2)
             let predStat = (rainP !== null && rainP > 50) ? 2 : (hum > 78 ? 1 : 0);
             
             historyData.timestamps.push(timeStr);
@@ -1769,7 +1911,7 @@ const char htmlPage[] PROGMEM = R"rawliteral(
             historyData.predictedStatus.push(predStat);
           });
           
-          // Tìm entry mới nhất có dữ liệu cảm biến (field1 không null)
+          // TÃ¬m entry má»›i nháº¥t cÃ³ dá»¯ liá»‡u cáº£m biáº¿n (field1 khÃ´ng null)
           let latestSensorFeed = null;
           for (let i = data.feeds.length - 1; i >= 0; i--) {
             if (data.feeds[i].field1 !== null && data.feeds[i].field1 !== undefined && data.feeds[i].field1 !== '') {
@@ -1781,7 +1923,7 @@ const char htmlPage[] PROGMEM = R"rawliteral(
             latestSensorFeed = data.feeds[data.feeds.length - 1];
           }
 
-          // Tìm entry mới nhất có dữ liệu MATLAB (field6 không null)
+          // TÃ¬m entry má»›i nháº¥t cÃ³ dá»¯ liá»‡u MATLAB (field6 khÃ´ng null)
           let latestMatlabFeed = null;
           for (let i = data.feeds.length - 1; i >= 0; i--) {
             if (data.feeds[i].field6 !== null && data.feeds[i].field6 !== undefined && data.feeds[i].field6 !== '') {
@@ -1814,8 +1956,8 @@ const char htmlPage[] PROGMEM = R"rawliteral(
           runLinearRegression();
         })
         .catch(err => {
-          console.warn("Không kết nối được ThingSpeak, chạy mô phỏng...", err);
-          updateConnectionStatus(false, "Không lấy được dữ liệu Cloud. Đang chạy mô phỏng.");
+          console.warn("KhÃ´ng káº¿t ná»‘i Ä‘Æ°á»£c ThingSpeak, cháº¡y mÃ´ phá»ng...", err);
+          updateConnectionStatus(false, "KhÃ´ng láº¥y Ä‘Æ°á»£c dá»¯ liá»‡u Cloud. Äang cháº¡y mÃ´ phá»ng.");
           generateMockData();
         });
     }
@@ -1884,19 +2026,19 @@ const char htmlPage[] PROGMEM = R"rawliteral(
       }
     }
 
-    // CẬP NHẬT GIAO DIỆN NGƯỜI DÙNG (UI)
+    // Cáº¬P NHáº¬T GIAO DIá»†N NGÆ¯á»œI DÃ™NG (UI)
     function updateUI() {
       document.getElementById('mainTemp').innerText = currentData.temperature.toFixed(1);
       
-      let summary = 'Không khí dễ chịu 🌤️';
-      let statusTag = 'Hệ thống an toàn';
+      let summary = 'KhÃ´ng khÃ­ dá»… chá»‹u ðŸŒ¤ï¸';
+      let statusTag = 'Há»‡ thá»‘ng an toÃ n';
       let iconHtml = '';
       
       const isRaining = currentData.rain < 500;
       
       if (isRaining) {
-        summary = 'Hiện có mưa dông khí quyển 🌧️. Bà con canh tác lưu ý rào chắn, kiểm tra hệ thống thoát nước chống úng rễ cà phê, tiêu và ngưng bón phân.';
-        statusTag = 'Mưa dông úng ngập';
+        summary = 'Hiá»‡n cÃ³ mÆ°a dÃ´ng khÃ­ quyá»ƒn ðŸŒ§ï¸. BÃ  con canh tÃ¡c lÆ°u Ã½ rÃ o cháº¯n, kiá»ƒm tra há»‡ thá»‘ng thoÃ¡t nÆ°á»›c chá»‘ng Ãºng rá»… cÃ  phÃª, tiÃªu vÃ  ngÆ°ng bÃ³n phÃ¢n.';
+        statusTag = 'MÆ°a dÃ´ng Ãºng ngáº­p';
         iconHtml = `
           <svg viewBox="0 0 64 64" width="80" height="80" class="weather-icon-svg sun-cloud-anim" style="filter: drop-shadow(0 6px 12px rgba(56, 189, 248, 0.4))">
             <defs>
@@ -1911,13 +2053,13 @@ const char htmlPage[] PROGMEM = R"rawliteral(
             <line x1="36" y1="54" x2="34" y2="60" stroke="#38bdf8" stroke-width="3" stroke-linecap="round"/>
           </svg>
         `;
-        showAlertBox(true, "⚠ Cảnh báo mưa úng! Kiểm tra ngay các rãnh thoát nước vườn sầu riêng Miền Tây và cà phê trũng.");
+        showAlertBox(true, "âš  Cáº£nh bÃ¡o mÆ°a Ãºng! Kiá»ƒm tra ngay cÃ¡c rÃ£nh thoÃ¡t nÆ°á»›c vÆ°á»n sáº§u riÃªng Miá»n TÃ¢y vÃ  cÃ  phÃª trÅ©ng.");
       } else {
         showAlertBox(false);
         
         if (currentData.temperature > 34) {
-          summary = 'Thời tiết nắng nóng gay gắt 🥵. Hãy tăng cường tưới ẩm đất rễ cây, đặc biệt là cây con và cà phê mới xuống giống để tránh héo lá.';
-          statusTag = 'Nắng nóng canh tác';
+          summary = 'Thá»i tiáº¿t náº¯ng nÃ³ng gay gáº¯t ðŸ¥µ. HÃ£y tÄƒng cÆ°á»ng tÆ°á»›i áº©m Ä‘áº¥t rá»… cÃ¢y, Ä‘áº·c biá»‡t lÃ  cÃ¢y con vÃ  cÃ  phÃª má»›i xuá»‘ng giá»‘ng Ä‘á»ƒ trÃ¡nh hÃ©o lÃ¡.';
+          statusTag = 'Náº¯ng nÃ³ng canh tÃ¡c';
           iconHtml = `
             <svg viewBox="0 0 64 64" width="80" height="80" class="weather-icon-svg sun-cloud-anim">
               <circle cx="32" cy="32" r="16" fill="url(#sunGradient)"/>
@@ -1928,16 +2070,16 @@ const char htmlPage[] PROGMEM = R"rawliteral(
             </svg>
           `;
         } else if (currentData.humidity > 85) {
-          summary = 'Độ ẩm không khí rất cao ☁️. Đề phòng nguy cơ phát triển các loại nấm ký sinh có hại (rỉ sắt, nấm hồng). Hạn chế phun phân bón lá lúc này.';
-          statusTag = 'Cảnh báo dịch hại';
+          summary = 'Äá»™ áº©m khÃ´ng khÃ­ ráº¥t cao â˜ï¸. Äá» phÃ²ng nguy cÆ¡ phÃ¡t triá»ƒn cÃ¡c loáº¡i náº¥m kÃ½ sinh cÃ³ háº¡i (rá»‰ sáº¯t, náº¥m há»“ng). Háº¡n cháº¿ phun phÃ¢n bÃ³n lÃ¡ lÃºc nÃ y.';
+          statusTag = 'Cáº£nh bÃ¡o dá»‹ch háº¡i';
           iconHtml = `
             <svg viewBox="0 0 64 64" width="80" height="80" class="weather-icon-svg sun-cloud-anim">
               <path d="M46 38a10 10 0 0 0-9-6 10.5 10.5 0 0 0-4 .8A12 12 0 1 0 22 50h24a10 10 0 0 0 0-20z" fill="url(#cloudGradient)"/>
             </svg>
           `;
         } else {
-          summary = 'Thời tiết nắng ráo thuận lợi 🌤️. Thích hợp để tiến hành bón phân dinh dưỡng, làm cỏ đất đai, tỉa cành hoặc phơi sấy hạt nông sản.';
-          statusTag = 'Canh tác tốt';
+          summary = 'Thá»i tiáº¿t náº¯ng rÃ¡o thuáº­n lá»£i ðŸŒ¤ï¸. ThÃ­ch há»£p Ä‘á»ƒ tiáº¿n hÃ nh bÃ³n phÃ¢n dinh dÆ°á»¡ng, lÃ m cá» Ä‘áº¥t Ä‘ai, tá»‰a cÃ nh hoáº·c phÆ¡i sáº¥y háº¡t nÃ´ng sáº£n.';
+          statusTag = 'Canh tÃ¡c tá»‘t';
           iconHtml = `
             <svg viewBox="0 0 64 64" width="80" height="80" class="weather-icon-svg sun-cloud-anim">
               <circle cx="24" cy="24" r="12" fill="url(#sunGradient)"/>
@@ -1951,11 +2093,11 @@ const char htmlPage[] PROGMEM = R"rawliteral(
       document.getElementById('weatherStatusTag').innerText = statusTag;
       document.getElementById('weatherIconContainer').innerHTML = iconHtml;
       
-      // Cập nhật giá trị Hero banner
+      // Cáº­p nháº­t giÃ¡ trá»‹ Hero banner
       if (currentData.predictedTemp !== null) {
-        document.getElementById('subTemp').innerText = `${currentData.predictedTemp.toFixed(1)} °C`;
+        document.getElementById('subTemp').innerText = `${currentData.predictedTemp.toFixed(1)} Â°C`;
       } else {
-        document.getElementById('subTemp').innerText = `-- °C`;
+        document.getElementById('subTemp').innerText = `-- Â°C`;
       }
       
       if (currentData.rainProbability !== null) {
@@ -1965,16 +2107,16 @@ const char htmlPage[] PROGMEM = R"rawliteral(
       }
 
       if (currentData.predictedStatus !== null) {
-        const statusMap = {0: "Nắng ráo ☀️", 1: "Nhiều mây ☁️", 2: "Mưa dông 🌧️"};
-        const iconMap = {0: "☀️", 1: "☁️", 2: "🌧️"};
-        document.getElementById('aiStatusText').innerText = statusMap[currentData.predictedStatus] || "Chưa rõ";
-        document.getElementById('aiStatusIcon').innerText = iconMap[currentData.predictedStatus] || "🤖";
+        const statusMap = {0: "Náº¯ng rÃ¡o â˜€ï¸", 1: "Nhiá»u mÃ¢y â˜ï¸", 2: "MÆ°a dÃ´ng ðŸŒ§ï¸"};
+        const iconMap = {0: "â˜€ï¸", 1: "â˜ï¸", 2: "ðŸŒ§ï¸"};
+        document.getElementById('aiStatusText').innerText = statusMap[currentData.predictedStatus] || "ChÆ°a rÃµ";
+        document.getElementById('aiStatusIcon').innerText = iconMap[currentData.predictedStatus] || "ðŸ¤–";
       } else {
-        document.getElementById('aiStatusText').innerText = "Đang tính...";
-        document.getElementById('aiStatusIcon').innerText = "🤖";
+        document.getElementById('aiStatusText').innerText = "Äang tÃ­nh...";
+        document.getElementById('aiStatusIcon').innerText = "ðŸ¤–";
       }
 
-      // Cập nhật Cards phía dưới
+      // Cáº­p nháº­t Cards phÃ­a dÆ°á»›i
       document.getElementById('valHumidity').innerText = currentData.humidity.toFixed(1);
       document.getElementById('barHumidity').style.width = `${currentData.humidity}%`;
       
@@ -1982,15 +2124,15 @@ const char htmlPage[] PROGMEM = R"rawliteral(
 
       const pressBadge = document.getElementById('badgePressure');
       if (currentData.pressure < 1009) {
-        pressBadge.innerText = "Áp suất thấp";
+        pressBadge.innerText = "Ãp suáº¥t tháº¥p";
         pressBadge.style.color = "#ef4444";
         pressBadge.style.backgroundColor = "rgba(239, 68, 68, 0.12)";
       } else if (currentData.pressure > 1014) {
-        pressBadge.innerText = "Áp suất cao";
+        pressBadge.innerText = "Ãp suáº¥t cao";
         pressBadge.style.color = "#10b981";
         pressBadge.style.backgroundColor = "rgba(16, 185, 129, 0.12)";
       } else {
-        pressBadge.innerText = "Bình thường";
+        pressBadge.innerText = "BÃ¬nh thÆ°á»ng";
         pressBadge.style.color = "#a855f7";
         pressBadge.style.backgroundColor = "rgba(168, 85, 247, 0.12)";
       }
@@ -1998,13 +2140,13 @@ const char htmlPage[] PROGMEM = R"rawliteral(
       document.getElementById('valRain').innerText = currentData.rain;
       const rainStatusEl = document.getElementById('statusRain');
       if (currentData.rain < 300) {
-        rainStatusEl.innerText = "🌧️ Mưa lớn";
+        rainStatusEl.innerText = "ðŸŒ§ï¸ MÆ°a lá»›n";
         rainStatusEl.style.color = "#ef4444";
       } else if (currentData.rain < 700) {
-        rainStatusEl.innerText = "🌦️ Mưa nhỏ / Phun";
+        rainStatusEl.innerText = "ðŸŒ¦ï¸ MÆ°a nhá» / Phun";
         rainStatusEl.style.color = "#eab308";
       } else {
-        rainStatusEl.innerText = "☀️ Không mưa";
+        rainStatusEl.innerText = "â˜€ï¸ KhÃ´ng mÆ°a";
         rainStatusEl.style.color = "#10b981";
       }
       
@@ -2035,7 +2177,7 @@ const char htmlPage[] PROGMEM = R"rawliteral(
       }
     }
 
-    // THUẬT TOÁN HỌC MÁY HỒI QUY TUYẾN TÍNH (LINEAR REGRESSION ENGINE)
+    // THUáº¬T TOÃN Há»ŒC MÃY Há»’I QUY TUYáº¾N TÃNH (LINEAR REGRESSION ENGINE)
     function calculateLinearRegression(yArr) {
       const n = yArr.length;
       if (n < 2) return { a: 0, b: 0, formula: 'y = --', predictNext: 0 };
@@ -2069,7 +2211,7 @@ const char htmlPage[] PROGMEM = R"rawliteral(
     function runLinearRegression() {
       const n = historyData.temperature.length;
       if (n < 5) {
-        document.getElementById('systemRecommendation').innerText = `Chờ thu thập đủ dữ liệu khí tượng (Đã có ${n}/5 điểm dữ liệu)...`;
+        document.getElementById('systemRecommendation').innerText = `Chá» thu tháº­p Ä‘á»§ dá»¯ liá»‡u khÃ­ tÆ°á»£ng (ÄÃ£ cÃ³ ${n}/5 Ä‘iá»ƒm dá»¯ liá»‡u)...`;
         return;
       }
       
@@ -2081,7 +2223,7 @@ const char htmlPage[] PROGMEM = R"rawliteral(
       document.getElementById('mathHum').innerText = `H(t) = ${regHum.a.toFixed(2)} * t ${regHum.b >= 0 ? '+' : '-'} ${Math.abs(regHum.b).toFixed(2)}`;
       document.getElementById('mathPres').innerText = `P(t) = ${regPres.a.toFixed(2)} * t ${regPres.b >= 0 ? '+' : '-'} ${Math.abs(regPres.b).toFixed(2)}`;
       
-      document.getElementById('predTemp').innerText = `${regTemp.predictNext.toFixed(1)} °C`;
+      document.getElementById('predTemp').innerText = `${regTemp.predictNext.toFixed(1)} Â°C`;
       document.getElementById('predHum').innerText = `${regHum.predictNext.toFixed(1)} %`;
       document.getElementById('predPres').innerText = `${regPres.predictNext.toFixed(1)} hPa`;
       
@@ -2098,13 +2240,13 @@ const char htmlPage[] PROGMEM = R"rawliteral(
     function updateTrendBadge(elemId, slope, threshold) {
       const badge = document.getElementById(elemId);
       if (slope > threshold) {
-        badge.innerText = "Tăng 📈";
+        badge.innerText = "TÄƒng ðŸ“ˆ";
         badge.className = "pred-trend trend-up";
       } else if (slope < -threshold) {
-        badge.innerText = "Giảm 📉";
+        badge.innerText = "Giáº£m ðŸ“‰";
         badge.className = "pred-trend trend-down";
       } else {
-        badge.innerText = "Ổn định ➔";
+        badge.innerText = "á»”n Ä‘á»‹nh âž”";
         badge.className = "pred-trend trend-stable";
       }
     }
@@ -2112,15 +2254,15 @@ const char htmlPage[] PROGMEM = R"rawliteral(
     function generateSmartRecommendation(slopeT, slopeH, slopeP) {
       let rec = "";
       if (slopeT < -0.05 && slopeH > 0.1) {
-        rec = "Khuyến nghị canh tác: Nhiệt độ giảm nhanh và độ ẩm tăng mạnh. Khả năng cao có mưa rào hoặc dông lốc trong 30-60 phút tới. Bà con nên ngưng ngay việc bón phân, thu hồi nông sản đang phơi sấy (cà phê, lúa) và rà soát hệ thống tiêu úng.";
+        rec = "Khuyáº¿n nghá»‹ canh tÃ¡c: Nhiá»‡t Ä‘á»™ giáº£m nhanh vÃ  Ä‘á»™ áº©m tÄƒng máº¡nh. Kháº£ nÄƒng cao cÃ³ mÆ°a rÃ o hoáº·c dÃ´ng lá»‘c trong 30-60 phÃºt tá»›i. BÃ  con nÃªn ngÆ°ng ngay viá»‡c bÃ³n phÃ¢n, thu há»“i nÃ´ng sáº£n Ä‘ang phÆ¡i sáº¥y (cÃ  phÃª, lÃºa) vÃ  rÃ  soÃ¡t há»‡ thá»‘ng tiÃªu Ãºng.";
       } else if (slopeP < -0.05 && currentData.rain < 900) {
-        rec = "Khuyến nghị canh tác: Khí áp giảm kèm lượng mưa tích tụ. Dấu hiệu của áp thấp nhiệt đới hoặc mưa dông kéo dài. Cảnh báo nguy cơ thối rễ cây ăn trái ở Miền Tây. Hãy gia cố bờ bao vườn sầu riêng, cam sành để chủ động chống ngập úng.";
+        rec = "Khuyáº¿n nghá»‹ canh tÃ¡c: KhÃ­ Ã¡p giáº£m kÃ¨m lÆ°á»£ng mÆ°a tÃ­ch tá»¥. Dáº¥u hiá»‡u cá»§a Ã¡p tháº¥p nhiá»‡t Ä‘á»›i hoáº·c mÆ°a dÃ´ng kÃ©o dÃ i. Cáº£nh bÃ¡o nguy cÆ¡ thá»‘i rá»… cÃ¢y Äƒn trÃ¡i á»Ÿ Miá»n TÃ¢y. HÃ£y gia cá»‘ bá» bao vÆ°á»n sáº§u riÃªng, cam sÃ nh Ä‘á»ƒ chá»§ Ä‘á»™ng chá»‘ng ngáº­p Ãºng.";
       } else if (slopeT > 0.05 && slopeH < -0.1) {
-        rec = "Khuyến nghị canh tác: Nhiệt độ tăng và độ ẩm giảm dần. Trời nắng ấm tạnh ráo. Thời tiết rất thích hợp để bón phân thúc nông sản, tiến hành phun thuốc phòng trừ sâu bệnh hoặc phơi sấy hạt tiêu, hạt cà phê.";
+        rec = "Khuyáº¿n nghá»‹ canh tÃ¡c: Nhiá»‡t Ä‘á»™ tÄƒng vÃ  Ä‘á»™ áº©m giáº£m dáº§n. Trá»i náº¯ng áº¥m táº¡nh rÃ¡o. Thá»i tiáº¿t ráº¥t thÃ­ch há»£p Ä‘á»ƒ bÃ³n phÃ¢n thÃºc nÃ´ng sáº£n, tiáº¿n hÃ nh phun thuá»‘c phÃ²ng trá»« sÃ¢u bá»‡nh hoáº·c phÆ¡i sáº¥y háº¡t tiÃªu, háº¡t cÃ  phÃª.";
       } else if (Math.abs(slopeT) <= 0.05 && Math.abs(slopeH) <= 0.1) {
-        rec = "Khuyến nghị canh tác: Khí áp và độ ẩm không khí rất ổn định. Không phát hiện biến động thời tiết cực đoan trong 2 giờ tới. Điều kiện lý tưởng để cấy lúa, xuống giống cây trồng mới hoặc cắt tỉa cành tạo tán.";
+        rec = "Khuyáº¿n nghá»‹ canh tÃ¡c: KhÃ­ Ã¡p vÃ  Ä‘á»™ áº©m khÃ´ng khÃ­ ráº¥t á»•n Ä‘á»‹nh. KhÃ´ng phÃ¡t hiá»‡n biáº¿n Ä‘á»™ng thá»i tiáº¿t cá»±c Ä‘oan trong 2 giá» tá»›i. Äiá»u kiá»‡n lÃ½ tÆ°á»Ÿng Ä‘á»ƒ cáº¥y lÃºa, xuá»‘ng giá»‘ng cÃ¢y trá»“ng má»›i hoáº·c cáº¯t tá»‰a cÃ nh táº¡o tÃ¡n.";
       } else {
-        rec = "Nhận định khuyến nông: Chỉ số nhiệt ẩm dao động ổn định trong biên độ canh tác an toàn. Bà con duy trì lượng nước tưới tiêu buổi sáng/chiều và chăm sóc cây trồng theo lịch định kỳ.";
+        rec = "Nháº­n Ä‘á»‹nh khuyáº¿n nÃ´ng: Chá»‰ sá»‘ nhiá»‡t áº©m dao Ä‘á»™ng á»•n Ä‘á»‹nh trong biÃªn Ä‘á»™ canh tÃ¡c an toÃ n. BÃ  con duy trÃ¬ lÆ°á»£ng nÆ°á»›c tÆ°á»›i tiÃªu buá»•i sÃ¡ng/chiá»u vÃ  chÄƒm sÃ³c cÃ¢y trá»“ng theo lá»‹ch Ä‘á»‹nh ká»³.";
       }
       document.getElementById('systemRecommendation').innerText = rec;
     }
