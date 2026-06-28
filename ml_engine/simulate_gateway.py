@@ -13,7 +13,6 @@ sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8')
 PORT = 5000
 
 class MockGatewayHandler(BaseHTTPRequestHandler):
-    relay_state = 0
     seq_counter = 0
 
     # Tắt tính năng log mặc định của http.server để tự in log đẹp hơn
@@ -70,29 +69,6 @@ class MockGatewayHandler(BaseHTTPRequestHandler):
             
             print(f"[GET /data] - Gửi dữ liệu: Temp={temp}°C, Hum={hum}%, Pres={pres}hPa, Rain={rain}, RSSI={rssi}dBm, Seq={MockGatewayHandler.seq_counter}")
             
-        elif self.path.startswith('/control'):
-            # Xử lý lệnh điều khiển relay của máy bơm/thiết bị từ Dashboard
-            parsed_path = urlparse(self.path)
-            params = parse_qs(parsed_path.query)
-            
-            if 'relay' in params:
-                relay_val = params['relay'][0]
-                MockGatewayHandler.relay_state = int(relay_val)
-                state_str = "BẬT 🟢" if MockGatewayHandler.relay_state == 1 else "TẮT 🔴"
-                print(f"[GET /control] - Nhận lệnh điều khiển Relay: {state_str}")
-            
-            data = {
-                "status": "ok",
-                "relay": MockGatewayHandler.relay_state
-            }
-            response_json = json.dumps(data)
-            
-            self.send_response(200)
-            self.send_header('Content-Type', 'application/json')
-            self.send_header('Access-Control-Allow-Origin', '*')
-            self.end_headers()
-            self.wfile.write(response_json.encode('utf-8'))
-            
         else:
             self.send_response(404)
             self.send_header('Access-Control-Allow-Origin', '*')
@@ -106,7 +82,6 @@ def main():
     print("====================================================")
     print(f"Server giả lập Local Gateway đang chạy tại cổng {PORT}...")
     print(f"Địa chỉ API dữ liệu: http://localhost:{PORT}/data")
-    print(f"Địa chỉ API điều khiển: http://localhost:{PORT}/control")
     print("----------------------------------------------------")
     print("HƯỚNG DẪN CẤU HÌNH TRÊN REACT DASHBOARD:")
     print(f"1. Nhấn nút Bánh răng cài đặt (⚙️) ở góc trên bên phải UI.")

@@ -12,7 +12,7 @@ channelID   = 0000000;               % Channel ID (số trên URL ThingSpeak)
 readAPIKey  = 'YOUR_READ_API_KEY';
 writeAPIKey = 'YOUR_WRITE_API_KEY';
 
-numPoints = 12;   % Số điểm gần nhất dùng để hồi quy
+numPoints = 180;   % Số điểm gần nhất dùng để hồi quy (180 điểm * 60s = 3 giờ)
 
 % ── 1. Đọc lịch sử Temp (field1) + Pressure (field3) ─────────────
 try
@@ -41,11 +41,11 @@ nextTemp = max(min(nextTemp, max(temp) + 5), min(temp) - 5); % Giới hạn ngo�
 pPres         = polyfit(t, pres, 1);
 pressureSlope = pPres(1);
 
-if pressureSlope < -1.0
+if pressureSlope < -0.1
     rainProb = 80;
-elseif pressureSlope < -0.3
+elseif pressureSlope < -0.03
     rainProb = 50;
-elseif pressureSlope > 1.0
+elseif pressureSlope > 0.1
     rainProb = 5;
 else
     rainProb = 20;

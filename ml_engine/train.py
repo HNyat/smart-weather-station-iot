@@ -132,6 +132,17 @@ def calculate_heat_index(temp, hum):
     hi = 0.5 * (temp + 61.0 + ((temp - 68.0) * 1.2) + (hum * 0.094))
     return np.where(temp < 27.0, temp, hi)
 
+def calculate_dew_point(temp, hum):
+    """
+    Tính toán điểm sương (Dew Point) theo công thức Magnus-Tetens.
+    """
+    a = 17.27
+    b = 237.7
+    # Tránh giá trị độ ẩm bằng 0 hoặc âm gây lỗi log
+    hum_clipped = np.clip(hum, 0.01, 100.0)
+    alpha = ((a * temp) / (b + temp)) + np.log(hum_clipped / 100.0)
+    return (b * alpha) / (a - alpha)
+
 def feature_engineering(df):
     """
     Creates lag features and diff features for time series forecasting.
@@ -139,19 +150,28 @@ def feature_engineering(df):
     """
     print("=== 2. Thiết kế Đặc trưng (Feature Engineering) ===")
     
-    # 1. Trích xuất đặc trưng tuần hoàn thời gian (Cyclic hour)
-    hour = pd.to_datetime(df["timestamp"]).dt.hour
+    # 1. Trích xuất đặc trưng tuần hoàn thời gian (Cyclic hour & Month)
+    timestamp_dt = pd.to_datetime(df["timestamp"])
+    hour = timestamp_dt.dt.hour
     df["hour_sin"] = np.sin(2 * np.pi * hour / 24)
     df["hour_cos"] = np.cos(2 * np.pi * hour / 24)
+    
+    month = timestamp_dt.dt.month
+    df["month_sin"] = np.sin(2 * np.pi * month / 12)
+    df["month_cos"] = np.cos(2 * np.pi * month / 12)
     
     # 2. Tạo các biến trễ (Lag features)
     df["temp_lag1"] = df["temperature"].shift(1)
     df["temp_lag2"] = df["temperature"].shift(2)
     df["temp_diff"] = df["temp_lag1"] - df["temp_lag2"]
     
+    # Thống kê trượt trung bình trượt 3 giờ (Rolling Mean)
+    df["temp_roll_mean_3h"] = df["temperature"].shift(1).rolling(window=3).mean()
+    
     df["hum_lag1"] = df["humidity"].shift(1)
     df["hum_lag2"] = df["humidity"].shift(2)
     df["hum_diff"] = df["hum_lag1"] - df["hum_lag2"]
+    df["hum_roll_mean_3h"] = df["humidity"].shift(1).rolling(window=3).mean()
     
     df["pres_lag1"] = df["pressure"].shift(1)
     df["pres_lag2"] = df["pressure"].shift(2)
@@ -163,21 +183,26 @@ def feature_engineering(df):
     df["rain_lag1"] = df["rain_analog"].shift(1)
     df["rain_lag2"] = df["rain_analog"].shift(2)
     
-    # 3. Tính toán chỉ số nhiệt cảm nhận (Heat Index) và độ trễ của nó
+    # 3. Tính toán chỉ số nhiệt cảm nhận (Heat Index), điểm sương (Dew Point) và độ trễ
     df["heat_index"] = calculate_heat_index(df["temperature"], df["humidity"])
     df["heat_index_lag1"] = df["heat_index"].shift(1)
+    
+    df["dew_point"] = calculate_dew_point(df["temperature"], df["humidity"])
+    df["dew_point_lag1"] = df["dew_point"].shift(1)
     
     # 4. Tạo các biến mục tiêu (Targets) cần dự đoán cho chu kỳ TIẾP THEO (+1h)
     df["target_temp"] = df["temperature"]
     df["target_hum"] = df["humidity"]
     
-    # Trạng thái thời tiết chu kỳ tiếp theo:
-    # 2 (Mưa): Cảm biến mưa < 700
-    # 1 (Nhiều mây): Cảm biến mưa >= 700 và Độ ẩm >= 78%
-    # 0 (Nắng ráo): Cảm biến mưa >= 700 và Độ ẩm < 78%
+    # Trạng thái thời tiết thực tế chu kỳ tiếp theo (Dựa vào rain_mm vật lý và độ ẩm thực từ Open-Meteo):
+    # 2 (Mưa): rain_mm > 0.1 mm
+    # 1 (Nhiều mây): rain_mm <= 0.1 mm và Độ ẩm >= 78%
+    # 0 (Nắng ráo): rain_mm <= 0.1 mm và Độ ẩm < 78%
     weather_status = []
     for idx, row in df.iterrows():
-        if row["rain_analog"] < 700:
+        # Dùng cột lượng mưa vật lý thực tế rain_mm thay vì rain_analog giả lập ngẫu nhiên
+        rain_val = row.get("rain_mm", 0.0)
+        if rain_val > 0.1:
             status = 2 # Mưa
         elif row["humidity"] >= 78.0:
             status = 1 # Nhiều mây / u ám
@@ -187,17 +212,21 @@ def feature_engineering(df):
     df["weather_status"] = weather_status
     df["target_status"] = df["weather_status"]
     
-    # Loại bỏ các hàng có giá trị NaN do dịch chuyển (shift)
+    # Loại bỏ các hàng có giá trị NaN do dịch chuyển (shift) và tính trung bình trượt (rolling)
     df = df.dropna().copy()
     
     # Định nghĩa các đặc trưng đầu vào cho mô hình (Features)
     feature_cols = [
         "hour_sin", "hour_cos",
+        "month_sin", "month_cos",
         "temp_lag1", "temp_lag2", "temp_diff",
+        "temp_roll_mean_3h",
         "hum_lag1", "hum_lag2", "hum_diff",
+        "hum_roll_mean_3h",
         "pres_lag1", "pres_lag2", "pres_diff", "pres_trend_3h",
         "rain_lag1", "rain_lag2",
-        "heat_index_lag1"
+        "heat_index_lag1",
+        "dew_point_lag1"
     ]
     
     return df, feature_cols
@@ -214,10 +243,12 @@ def train_and_evaluate():
     y_hum = df_feat["target_hum"]
     y_status = df_feat["target_status"]
     
-    # Chia tập Train/Test (80% / 20%)
-    X_train, X_test, y_temp_train, y_temp_test = train_test_split(X, y_temp, test_size=0.2, random_state=42)
-    _, _, y_hum_train, y_hum_test = train_test_split(X, y_hum, test_size=0.2, random_state=42)
-    _, _, y_status_train, y_status_test = train_test_split(X, y_status, test_size=0.2, random_state=42)
+    # Chia tập Train/Test (80% / 20%) tuần tự cho Time-series (Tránh Data Leakage)
+    split_idx = int(len(df_feat) * 0.8)
+    X_train, X_test = X.iloc[:split_idx], X.iloc[split_idx:]
+    y_temp_train, y_temp_test = y_temp.iloc[:split_idx], y_temp.iloc[split_idx:]
+    y_hum_train, y_hum_test = y_hum.iloc[:split_idx], y_hum.iloc[split_idx:]
+    y_status_train, y_status_test = y_status.iloc[:split_idx], y_status.iloc[split_idx:]
     
     print("\n=== 3. Huấn luyện Mô hình Học máy (Random Forest) ===")
     

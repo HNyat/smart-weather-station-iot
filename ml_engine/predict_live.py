@@ -37,8 +37,8 @@ def check_models_exist():
         sys.exit(1)
 
 def fetch_latest_feeds(channel_id, read_key):
-    """Fetches the last 150 feeds from ThingSpeak to compute lag values"""
-    url = f"https://api.thingspeak.com/channels/{channel_id}/feeds.json?results=150"
+    """Fetches the last 300 feeds from ThingSpeak to compute lag values"""
+    url = f"https://api.thingspeak.com/channels/{channel_id}/feeds.json?results=300"
     if read_key:
         url += f"&api_key={read_key}"
         
@@ -115,6 +115,17 @@ def calculate_heat_index(temp, hum):
     hi = 0.5 * (temp + 61.0 + ((temp - 68.0) * 1.2) + (hum * 0.094))
     return temp if temp < 27.0 else hi
 
+def calculate_dew_point(temp, hum):
+    """
+    Tính toán điểm sương (Dew Point) theo công thức Magnus-Tetens.
+    """
+    a = 17.27
+    b = 237.7
+    hum_clipped = np.clip(hum, 0.01, 100.0)
+    alpha = ((a * temp) / (b + temp)) + np.log(hum_clipped / 100.0)
+    return (b * alpha) / (a - alpha)
+
+
 def preprocess_and_predict(feeds, feature_cols, model_temp, model_hum, model_status):
     """
     Parses current feeds, builds feature vectors using lag values,
@@ -172,29 +183,46 @@ def preprocess_and_predict(feeds, feature_cols, model_temp, model_hum, model_sta
     idx_1h = (df["created_at_dt"] - target_time_1h).abs().idxmin()
     row_1h = df.loc[idx_1h]
     
-    # Kiểm tra nếu khoảng cách thời gian vượt quá 20 phút thì dùng fallback (ví dụ index -6 hoặc dòng đầu tiên)
-    # Với chu kỳ gửi 10 phút/lần, 1 giờ trước tương đương bản ghi thứ 6 từ dưới lên (iloc[-6])
+    # Kiểm tra nếu khoảng cách thời gian vượt quá 20 phút thì dùng fallback (ví dụ index -60 hoặc dòng đầu tiên)
+    # Với chu kỳ gửi 60 giây/lần (1 phút), 1 giờ trước tương đương bản ghi thứ 60 từ dưới lên (iloc[-60])
     time_diff_mins = abs((row_1h["created_at_dt"] - target_time_1h).total_seconds()) / 60.0
     if time_diff_mins > 20.0:
-        if len(df) >= 6:
-            row_1h = df.iloc[-6]
+        if len(df) >= 60:
+            row_1h = df.iloc[-60]
         else:
             row_1h = df.iloc[0]
         print(f"CẢNH BÁO: Không tìm thấy bản ghi lý tưởng từ 1 giờ trước. Sử dụng fallback từ timestamp {row_1h['created_at_dt']}")
     else:
         print(f"Đã tìm thấy bản ghi chuẩn xác từ 1 giờ trước: {row_1h['created_at_dt']} (lệch {time_diff_mins:.1f} phút)")
         
+    # Tìm bản ghi gần nhất với 2 giờ trước (t-2h) để tính toán trung bình trượt
+    target_time_2h = latest_time - pd.Timedelta(hours=2)
+    idx_2h = (df["created_at_dt"] - target_time_2h).abs().idxmin()
+    row_2h = df.loc[idx_2h]
+    
+    # Kiểm tra nếu khoảng cách thời gian vượt quá 30 phút thì dùng fallback (ví dụ index -120 hoặc dòng đầu tiên)
+    # Với chu kỳ gửi 60 giây/lần (1 phút), 2 giờ trước tương đương bản ghi thứ 120 từ dưới lên (iloc[-120])
+    time_diff_mins_2h = abs((row_2h["created_at_dt"] - target_time_2h).total_seconds()) / 60.0
+    if time_diff_mins_2h > 30.0:
+        if len(df) >= 120:
+            row_2h = df.iloc[-120]
+        else:
+            row_2h = df.iloc[0]
+        print(f"CẢNH BÁO: Không tìm thấy bản ghi lý tưởng từ 2 giờ trước. Sử dụng fallback từ timestamp {row_2h['created_at_dt']}")
+    else:
+        print(f"Đã tìm thấy bản ghi chuẩn xác từ 2 giờ trước: {row_2h['created_at_dt']} (lệch {time_diff_mins_2h:.1f} phút)")
+ 
     # Tìm bản ghi gần nhất với 4 giờ trước (t-4h) để tính toán xu hướng áp suất trung hạn
     target_time_4h = latest_time - pd.Timedelta(hours=4)
     idx_4h = (df["created_at_dt"] - target_time_4h).abs().idxmin()
     row_4h = df.loc[idx_4h]
     
     # Kiểm tra nếu khoảng cách thời gian vượt quá 40 phút thì dùng fallback
-    # Với chu kỳ gửi 10 phút/lần, 4 giờ trước tương đương bản ghi thứ 24 từ dưới lên (iloc[-24])
+    # Với chu kỳ gửi 60 giây/lần (1 phút), 4 giờ trước tương đương bản ghi thứ 240 từ dưới lên (iloc[-240])
     time_diff_mins_4h = abs((row_4h["created_at_dt"] - target_time_4h).total_seconds()) / 60.0
     if time_diff_mins_4h > 40.0:
-        if len(df) >= 24:
-            row_4h = df.iloc[-24]
+        if len(df) >= 240:
+            row_4h = df.iloc[-240]
         else:
             row_4h = df.iloc[0]
         print(f"CẢNH BÁO: Không tìm thấy bản ghi lý tưởng từ 4 giờ trước. Sử dụng fallback từ timestamp {row_4h['created_at_dt']}")
@@ -203,9 +231,11 @@ def preprocess_and_predict(feeds, feature_cols, model_temp, model_hum, model_sta
 
     temp_t = latest_row["temperature"]
     temp_t1 = row_1h["temperature"]
+    temp_t2 = row_2h["temperature"]
     
     hum_t = latest_row["humidity"]
     hum_t1 = row_1h["humidity"]
+    hum_t2 = row_2h["humidity"]
     
     pres_t = latest_row["pressure"]
     pres_t1 = row_1h["pressure"]
@@ -221,20 +251,32 @@ def preprocess_and_predict(feeds, feature_cols, model_temp, model_hum, model_sta
     hour_sin = np.sin(2 * np.pi * target_hour / 24)
     hour_cos = np.cos(2 * np.pi * target_hour / 24)
     
+    current_month = local_time.month
+    month_sin = np.sin(2 * np.pi * current_month / 12)
+    month_cos = np.cos(2 * np.pi * current_month / 12)
+    
+    temp_roll_mean_3h = (temp_t + temp_t1 + temp_t2) / 3.0
+    hum_roll_mean_3h = (hum_t + hum_t1 + hum_t2) / 3.0
+    
     pres_trend_3h = pres_t1 - pres_t4
-    heat_index_lag1 = calculate_heat_index(temp_t1, hum_t1)
+    heat_index_lag1 = calculate_heat_index(temp_t, hum_t)
+    dew_point_lag1 = calculate_dew_point(temp_t, hum_t)
     
     # Tạo vector đặc trưng đầu vào khớp 100% với train.py
     input_data = {
         "hour_sin": hour_sin,
         "hour_cos": hour_cos,
+        "month_sin": month_sin,
+        "month_cos": month_cos,
         "temp_lag1": temp_t,
         "temp_lag2": temp_t1,
         "temp_diff": temp_t - temp_t1,
+        "temp_roll_mean_3h": temp_roll_mean_3h,
         
         "hum_lag1": hum_t,
         "hum_lag2": hum_t1,
         "hum_diff": hum_t - hum_t1,
+        "hum_roll_mean_3h": hum_roll_mean_3h,
         
         "pres_lag1": pres_t,
         "pres_lag2": pres_t1,
@@ -243,7 +285,8 @@ def preprocess_and_predict(feeds, feature_cols, model_temp, model_hum, model_sta
         
         "rain_lag1": rain_t,
         "rain_lag2": rain_t1,
-        "heat_index_lag1": heat_index_lag1
+        "heat_index_lag1": heat_index_lag1,
+        "dew_point_lag1": dew_point_lag1
     }
     
     # Chuyển đổi thành DataFrame và khớp thứ tự cột
@@ -284,18 +327,13 @@ def preprocess_and_predict(feeds, feature_cols, model_temp, model_hum, model_sta
     return pred_temp, pred_hum, rain_prob, pred_status, input_data["pres_diff"], temp_t, hum_t, pres_t, rain_t, bat_t, latest_row["created_at"]
 
 def upload_predictions(write_key, pred_temp, pred_hum, rain_prob, temp_t, hum_t, pres_t, rain_t, bat_t):
-    """Uploads both predictions and carry-over latest sensor metrics to ThingSpeak (fields 1-8)"""
+    """Uploads predictions to ThingSpeak (fields 6-8) using partial update."""
     url = f"https://api.thingspeak.com/update?api_key={write_key}"
-    url += f"&field1={temp_t:.2f}"
-    url += f"&field2={hum_t:.2f}"
-    url += f"&field3={pres_t:.2f}"
-    url += f"&field4={int(rain_t)}"
-    url += f"&field5={int(bat_t)}"
     url += f"&field6={pred_temp:.2f}"
     url += f"&field7={rain_prob:.1f}"
     url += f"&field8={pred_hum:.2f}" # Field 8 đổi thành dự báo độ ẩm
     
-    print(f"Đang tải kết quả dự báo và dữ liệu cảm biến đồng nhất lên ThingSpeak...")
+    print(f"Đang tải kết quả dự báo lên ThingSpeak (Partial Update)...")
     try:
         response = requests.get(url, timeout=10)
         response.raise_for_status()

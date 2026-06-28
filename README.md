@@ -2,7 +2,7 @@
 
 Dự án nghiên cứu và triển khai hệ thống **Trạm quan trắc khí tượng thông minh (Smart Weather Station)** ứng dụng kết nối không dây tầm xa **LoRa P2P (Peer-to-Peer)**, tích hợp cổng **Gateway Cloud (ThingSpeak)** và mô hình dự báo thời tiết bằng trí tuệ nhân tạo **AI (Random Forest)** chạy tự động qua **GitHub Actions**.
 
-Dự án cung cấp giao diện theo dõi trực quan dạng **Web Dashboard (React + Vite)** hỗ trợ hai luồng thu thập dữ liệu song song: truy xuất trực tiếp từ Gateway nội bộ (Local) hoặc thông qua Cloud ThingSpeak.
+Dự án cung cấp giao diện theo dõi trực quan dạng **Web Dashboard (HTML/CSS/JS thuần)** hỗ trợ hai luồng thu thập dữ liệu song song: truy xuất trực tiếp từ Gateway nội bộ (Local) hoặc thông qua Cloud ThingSpeak.
 
 ---
 
@@ -45,8 +45,7 @@ graph TD
 
     %% Giao diện người dùng
     subgraph Frontend [Giao Diện Dashboard Người Dùng]
-        Dash[Web Dashboard - React + Vite]
-        DashHTML[Dashboard Tĩnh - Single HTML]
+        Dash[Web Dashboard - index.html]
     end
     
     Cloud -- "HTTP API (Cloud Mode)" --> Frontend
@@ -68,8 +67,8 @@ graph TD
    - **Mô hình Random Forest (Python)**: Được huấn luyện dựa trên dữ liệu lịch sử thời tiết 3 năm thực tế (API Open-Meteo), tự động phân loại trạng thái thời tiết (Nắng ráo, Nhiều mây, Mưa dông) và dự báo nhiệt độ, độ ẩm sau 1 giờ tịnh tiến với độ chính xác cao.
    - **GitHub Actions Integration**: Quy trình dự báo chạy tự động mỗi 30 phút trên GitHub Runner bằng cách gọi mô hình học máy đã huấn luyện sẵn và ghi kết quả ngược lại ThingSpeak.
    - **MATLAB Analysis (Hồi quy tuyến tính)**: Thiết lập dự phòng trực tiếp trên nền tảng ThingSpeak để dự toán nhiệt độ và xu hướng áp suất nếu mô hình AI Python ngoại tuyến.
-4. **Dashboard Hiện Đại & Trực Quan (React & Tailwind/Custom CSS)**:
-   - Hỗ trợ chế độ màu tối (Dark Mode), hiệu ứng kính mờ (Glassmorphism), biểu đồ thời gian thực (Chart.js) mượt mà.
+4. **Dashboard Hiện Đại & Trực Quan (HTML/CSS/JS thuần & SVG Chart)**:
+   - Hỗ trợ chế độ màu tối (Dark Mode), hiệu ứng kính mờ (Glassmorphism), biểu đồ thời gian thực dạng SVG tự thân vẽ siêu nhẹ không phụ thuộc thư viện bên ngoài.
    - Đưa ra những cảnh báo canh tác thông minh dựa trên xu hướng thay đổi nhiệt-ẩm cục bộ phục vụ thiết thực cho tưới tiêu, nông nghiệp Việt Nam (ví dụ: phòng ngập úng sầu riêng, bệnh rỉ sắt trên cà phê).
 
 ---
@@ -91,27 +90,21 @@ graph TD
 │   ├── predict_live.py      # Lấy dữ liệu thực tế, tính toán đặc trưng trễ, dự báo và cập nhật
 │   └── requirements.txt     # Danh sách thư viện Python phụ thuộc
 ├── models/                  # Lưu trữ các file mô hình máy học đã huấn luyện (.joblib)
-├── src/                     # Mã nguồn ứng dụng React (Vite)
-│   ├── components/          # Các components giao diện (MetricCard, ChartPanel, MLPanel...)
-│   ├── App.jsx              # Điểm bắt đầu xử lý luồng dữ liệu của giao diện
-│   └── index.css            # Định nghĩa Design System và hiệu ứng CSS
-└── vite.config.js           # Cấu hình đóng gói React + Vite
+├── index.html               # Web Dashboard chính (chạy trực tiếp không cần server)
+└── compile_html.py          # Script Python đóng gói giao diện mẫu sang file header C++ và index.html
 ```
 
 ---
 
 ## 🛠️ Hướng Dẫn Cài Đặt & Chạy Dự Án (Quickstart)
 
-### 1. Chạy Web Dashboard (React + Vite)
-Đảm bảo máy tính của bạn đã cài đặt [Node.js](https://nodejs.org/).
+### 1. Chạy Web Dashboard (HTML/CSS/JS thuần)
+Giao diện được thiết kế hoàn toàn bằng HTML/CSS/JS thuần và hoạt động độc lập (offline-ready).
+- Bạn chỉ cần nhấp đúp vào file `index.html` ở thư mục gốc để mở Dashboard trong trình duyệt.
+- Nếu bạn có chỉnh sửa giao diện trong tệp mẫu `data/viewWeatherStation.html`, hãy chạy script sau để đồng bộ ra file `index.html` chính và file header nạp ESP8266:
 ```bash
-# Di chuyển đến thư mục dự án và cài đặt dependencies
-npm install
-
-# Khởi chạy dự án ở chế độ local development
-npm run dev
+python compile_html.py
 ```
-*Truy cập liên kết `http://localhost:5173` hiển thị trên màn hình terminal để kiểm tra.*
 
 ### 2. Sử dụng Mô Hình Máy Học Python (ML Engine)
 Đảm bảo bạn đã cài đặt [Python 3.10+](https://www.python.org/).

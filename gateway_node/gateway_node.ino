@@ -6,6 +6,7 @@
 #include <ESP8266WebServer.h>
 #include <ESP8266HTTPClient.h>   // ★ MỚI: gửi HTTP lên ThingSpeak
 #include <WiFiClient.h>          // ★ MỚI
+#include <DNSServer.h>           // ★ MỚI: Thư viện chạy Captive Portal
 #include "weather_html.h"        // ★ MỚI: Lưu toàn bộ HTML/CSS/JS ở tab này
 
 // =====================
@@ -15,11 +16,7 @@
 #define RST   D0
 #define DIO0  D1
 
-// =====================
-// Điều khiển Thiết bị ngoại vi (Relay)
-// =====================
-#define RELAY_PIN D2
-int relayState = 0; // 0: OFF, 1: ON
+
 
 // =====================
 // Cấu hình WiFi Access Point (giữ nguyên — user cục bộ)
@@ -29,10 +26,16 @@ const char* password = "12345678";
 ESP8266WebServer server(80);
 
 // =====================
+// ★ MỚI: Cấu hình Captive Portal DNS Server
+// =====================
+const byte DNS_PORT = 53;
+DNSServer dnsServer;
+
+// =====================
 // ★ MỚI: Cấu hình WiFi Station (để có Internet đẩy ThingSpeak)
 // =====================
-const char* staSsid     = "TEN_WIFI_NHA_BAN";      // ← ĐIỀN WiFi nhà bạn
-const char* staPassword = "MAT_KHAU_WIFI_NHA_BAN"; // ← ĐIỀN mật khẩu
+const char* staSsid     = "LAB_AI";      // ← ĐIỀN WiFi nhà bạn
+const char* staPassword = "1234567890@"; // ← ĐIỀN mật khẩu
 
 // =====================
 // ★ MỚI: Cấu hình ThingSpeak
@@ -74,7 +77,7 @@ typedef struct {
 // Xử lý Web Root (Giao diện Dashboard Pro)
 // =====================
 void handleRoot() { 
-  server.send_P(200, "text/html", htmlPage); 
+  server.send_P(200, "text/html; charset=utf-8", htmlPage); 
 }
 
 void handleData() {
@@ -127,28 +130,7 @@ void sendToThingSpeak() {
   lastTSsend = millis();
 }
 
-// ============================================================
-// ★ MỚI: Điều khiển Relay
-// ============================================================
-void handleControl() {
-  server.sendHeader("Access-Control-Allow-Origin", "*"); // CORS
-  if (server.hasArg("relay")) {
-    String val = server.arg("relay");
-    if (val == "1") {
-      relayState = 1;
-      digitalWrite(RELAY_PIN, HIGH);
-      Serial.println("[Relay] BẬT máy bơm");
-    } else if (val == "0") {
-      relayState = 0;
-      digitalWrite(RELAY_PIN, LOW);
-      Serial.println("[Relay] TẮT máy bơm");
-    }
-  }
-  String json = "{\"relay\":";
-  json += String(relayState);
-  json += "}";
-  server.send(200, "application/json", json);
-}
+
 
 // ============================================================
 // ★ MỚI: Ghi log offline khi không có kết nối WiFi
@@ -299,9 +281,7 @@ void handleAutoSync() {
 void setup() {
   Serial.begin(115200);
 
-  // Cấu hình chân Relay
-  pinMode(RELAY_PIN, OUTPUT);
-  digitalWrite(RELAY_PIN, LOW); // Mặc định tắt máy bơm
+
 
   // Bật LittleFS
   if(!LittleFS.begin()) {
@@ -317,6 +297,10 @@ void setup() {
   WiFi.softAP(ssid, password);
   Serial.println("\nAccess Point Started: WeatherStation");
   Serial.print("IP Web Dashboard: "); Serial.println(WiFi.softAPIP());
+
+  // ★ MỚI: Khởi chạy DNS Server cho Captive Portal (Chuyển hướng mọi tên miền về ESP8266)
+  dnsServer.start(DNS_PORT, "*", WiFi.softAPIP());
+  Serial.println("DNS Server Started for Captive Portal redirection");
 
   // ★ MỚI: Kết nối STA vào WiFi nhà để có Internet
   Serial.printf("Đang kết nối STA tới '%s'", staSsid);
@@ -335,7 +319,13 @@ void setup() {
   // Bật Web Server
   server.on("/", handleRoot);
   server.on("/data", handleData);
-  server.on("/control", handleControl); // ★ MỚI
+  
+  // ★ MỚI: Chuyển hướng Captive Portal cho các thiết bị di động
+  server.onNotFound([]() {
+    server.sendHeader("Location", "http://192.168.4.1/", true);
+    server.send(302, "text/plain", ""); // Tự động chuyển hướng về trang chủ
+  });
+  
   server.begin();
 
   // Bật LoRa
@@ -352,6 +342,7 @@ void setup() {
 // Vòng lặp chính (Loop)
 // =====================
 void loop() {
+  dnsServer.processNextRequest(); // Duy trì Captive Portal DNS
   server.handleClient(); // Duy trì Web Server
 
   // Tự động kiểm tra và gửi bù dữ liệu ngoại tuyến khi có mạng
