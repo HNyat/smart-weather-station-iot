@@ -1229,12 +1229,10 @@
       <div class="header-actions">
         <div class="connection-status">
           <span class="status-dot online" id="statusDot"></span>
-          <span class="status-text" id="statusText">Đang kết nối...</span>
+          <!-- B1: Dual timestamp — cảm biến và AI là 2 nguồn cập nhật độc lập -->
+          <span class="status-text" id="statusText">Trực tuyến · đang tải...</span>
         </div>
-        <div class="mode-selector">
-          <button class="mode-btn active" id="btnCloud" onclick="setDataSource('cloud')">Cloud (ThingSpeak)</button>
-          <button class="mode-btn" id="btnLocal" onclick="setDataSource('local')">Local (ESP8266)</button>
-        </div>
+        <!-- B2: Local toggle đã xóa — luôn lỗi mixed-content trên HTTPS public -->
         <button class="icon-btn" id="btnSettings" onclick="toggleModal('settingsModal', true)" title="Cấu hình hệ thống">
           <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <circle cx="12" cy="12" r="3"></circle>
@@ -1244,19 +1242,19 @@
       </div>
     </header>
 
-    <!-- SYSTEM META BAR -->
+    <!-- SYSTEM META BAR — B1: Dual timestamp, sensor vs AI riêng biệt -->
     <div class="system-meta-bar">
       <div class="meta-item">
+        <span class="meta-label">📡 Cảm biến:</span>
+        <span class="meta-value" id="sensorAgoText" style="font-variant-numeric: tabular-nums;">--</span>
+      </div>
+      <div class="meta-item border-left">
+        <span class="meta-label">🤖 AI cập nhật:</span>
+        <span class="meta-value" id="aiAgoText" style="font-variant-numeric: tabular-nums;">--</span>
+      </div>
+      <div class="meta-item border-left">
         <span class="meta-label">LoRa RSSI:</span>
         <span class="meta-value" id="rssiValue">-- dBm</span>
-      </div>
-      <div class="meta-item border-left">
-        <span class="meta-label">Mã Gói (Seq):</span>
-        <span class="meta-value" id="seqNum">--</span>
-      </div>
-      <div class="meta-item border-left">
-        <span class="meta-label">Cập nhật lần cuối:</span>
-        <span class="meta-value" id="lastUpdated">--</span>
       </div>
       <div class="meta-item border-left flex-grow">
         <span class="meta-label">Nguồn cấp:</span>

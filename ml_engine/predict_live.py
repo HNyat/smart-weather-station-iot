@@ -14,9 +14,11 @@ import sqlite3
 
 
 # Configuration defaults
-CHANNEL_ID = "3413241"
-READ_API_KEY = "VISWQT7BABDVZOFS"
-WRITE_API_KEY = "IWSWJL8BLKHHGSG2"
+# QUAN TRỌNG: Đặt các giá trị thật vào GitHub Secrets / biến môi trường
+# Không hardcode API key trong code — repo này là PUBLIC
+CHANNEL_ID = os.environ.get("THINGSPEAK_CHANNEL_ID", "")
+READ_API_KEY = os.environ.get("THINGSPEAK_READ_KEY", "")
+WRITE_API_KEY = os.environ.get("THINGSPEAK_WRITE_KEY", "")
 
 # Paths to models relative to project root
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -255,7 +257,7 @@ def preprocess_and_predict(feeds, feature_cols, model_temp, model_hum, model_sta
     target_hour = (current_hour + 1) % 24
     hour_sin = np.sin(2 * np.pi * target_hour / 24)
     hour_cos = np.cos(2 * np.pi * target_hour / 24)
-    
+
     current_month = local_time.month
     month_sin = np.sin(2 * np.pi * current_month / 12)
     month_cos = np.cos(2 * np.pi * current_month / 12)
@@ -264,8 +266,9 @@ def preprocess_and_predict(feeds, feature_cols, model_temp, model_hum, model_sta
     hum_roll_mean_3h = (hum_t + hum_t1 + hum_t2) / 3.0
     
     pres_trend_3h = pres_t1 - pres_t4
-    heat_index_lag1 = calculate_heat_index(temp_t, hum_t)
-    dew_point_lag1 = calculate_dew_point(temp_t, hum_t)
+    # A2 FIX: lag1 phải là giá trị tại (t-1h), không phải (t) — khớp train.py shift(1)
+    heat_index_lag1 = calculate_heat_index(temp_t1, hum_t1)
+    dew_point_lag1 = calculate_dew_point(temp_t1, hum_t1)
     
     # Tạo vector đặc trưng đầu vào khớp 100% với train.py
     input_data = {
@@ -331,17 +334,18 @@ def preprocess_and_predict(feeds, feature_cols, model_temp, model_hum, model_sta
     
     return pred_temp, pred_hum, rain_prob, pred_status, input_data["pres_diff"], temp_t, hum_t, pres_t, rain_t, bat_t, latest_row["created_at"]
 
-def upload_predictions(write_key, pred_temp, pred_hum, rain_prob, temp_t, hum_t, pres_t, rain_t, bat_t):
-    """Uploads both predictions and carry-over latest sensor metrics to ThingSpeak (fields 1-8)"""
+def upload_predictions(write_key, pred_temp, pred_hum, rain_prob):
+    """
+    A3 FIX: Chỉ ghi field6-8 (AI predictions) — KHÔNG carry-over field1-5 sensor data.
+    Lý do: Khi predict chạy mỗi 15 phút, ghi lại field1-5 sẽ tạo entry giả với timestamp
+    của lúc AI chạy, không phải timestamp đo thật từ Gateway. Điều này gây sai lệch
+    biểu đồ và dual-timestamp logic ở frontend.
+    Gateway Node tự chịu trách nhiệm ghi field1-5 theo đúng thời gian đo thật.
+    """
     url = f"https://api.thingspeak.com/update?api_key={write_key}"
-    url += f"&field1={temp_t:.2f}"
-    url += f"&field2={hum_t:.2f}"
-    url += f"&field3={pres_t:.2f}"
-    url += f"&field4={int(rain_t)}"
-    url += f"&field5={int(bat_t)}"
-    url += f"&field6={pred_temp:.2f}"
-    url += f"&field7={rain_prob:.1f}"
-    url += f"&field8={pred_hum:.2f}" # Field 8 đổi thành dự báo độ ẩm
+    url += f"&field6={pred_temp:.2f}"         # Dự báo nhiệt độ +1h (°C)
+    url += f"&field7={rain_prob:.1f}"          # Xác suất mưa dự đoán (%)
+    url += f"&field8={pred_hum:.2f}"           # Dự báo độ ẩm +1h (%)
     
     print(f"Đang tải kết quả dự báo và dữ liệu cảm biến đồng nhất lên ThingSpeak...")
     try:
@@ -427,7 +431,7 @@ def main():
         pred_temp, pred_hum, rain_prob, pred_status, pres_diff, temp_t, hum_t, pres_t, rain_t, bat_t, timestamp = preprocess_and_predict(
             feeds, feature_cols, model_temp, model_hum, model_status
         )
-        upload_predictions(write_key, pred_temp, pred_hum, rain_prob, temp_t, hum_t, pres_t, rain_t, bat_t)
+        upload_predictions(write_key, pred_temp, pred_hum, rain_prob)
         save_to_local_db(timestamp, temp_t, hum_t, pres_t, rain_t, bat_t, pred_temp, pred_hum, rain_prob, pred_status, pres_diff)
     except Exception as e:
         print(f"Lỗi xảy ra trong quá trình thực thi: {e}")

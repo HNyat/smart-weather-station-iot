@@ -1092,12 +1092,10 @@
       <div class="header-actions">
         <div class="connection-status">
           <span class="status-dot online" id="statusDot"></span>
-          <span class="status-text" id="statusText">Đang kết nối...</span>
+          <!-- B1: Dual timestamp — cảm biến và AI là 2 nguồn cập nhật độc lập -->
+          <span class="status-text" id="statusText">Trực tuyến · đang tải...</span>
         </div>
-        <div class="mode-selector">
-          <button class="mode-btn active" id="btnCloud" onclick="setDataSource('cloud')">Cloud (ThingSpeak)</button>
-          <button class="mode-btn" id="btnLocal" onclick="setDataSource('local')">Local (ESP8266)</button>
-        </div>
+        <!-- B2: Local toggle đã xóa — luôn lỗi mixed-content trên HTTPS public -->
         <button class="icon-btn" id="btnSettings" onclick="toggleModal('settingsModal', true)" title="Cấu hình hệ thống">
           <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <circle cx="12" cy="12" r="3"></circle>
@@ -1107,19 +1105,19 @@
       </div>
     </header>
 
-    <!-- SYSTEM META BAR -->
+    <!-- SYSTEM META BAR — B1: Dual timestamp, sensor vs AI riêng biệt -->
     <div class="system-meta-bar">
       <div class="meta-item">
+        <span class="meta-label">📡 Cảm biến:</span>
+        <span class="meta-value" id="sensorAgoText" style="font-variant-numeric: tabular-nums;">--</span>
+      </div>
+      <div class="meta-item border-left">
+        <span class="meta-label">🤖 AI cập nhật:</span>
+        <span class="meta-value" id="aiAgoText" style="font-variant-numeric: tabular-nums;">--</span>
+      </div>
+      <div class="meta-item border-left">
         <span class="meta-label">LoRa RSSI:</span>
         <span class="meta-value" id="rssiValue">-- dBm</span>
-      </div>
-      <div class="meta-item border-left">
-        <span class="meta-label">Mã Gói (Seq):</span>
-        <span class="meta-value" id="seqNum">--</span>
-      </div>
-      <div class="meta-item border-left">
-        <span class="meta-label">Cập nhật lần cuối:</span>
-        <span class="meta-value" id="lastUpdated">--</span>
       </div>
       <div class="meta-item border-left flex-grow">
         <span class="meta-label">Nguồn cấp:</span>
@@ -1522,6 +1520,10 @@
     let weatherChart = null;
     let activeChartTab = 'temp';   // 'temp', 'hum', 'pres', 'rain', 'bat'
     let fetchInterval = null;
+    let aiPollInterval = null;
+    // B1: Tracking timestamps riêng biệt cho cảm biến và AI
+    let lastSensorTime = null;     // Thời điểm bản ghi cảm biến mới nhất
+    let lastAiTime = null;         // Thời điểm AI dự báo mới nhất
 
     // KHỞI CHẠY TRANG
     document.addEventListener("DOMContentLoaded", () => {
@@ -1529,6 +1531,8 @@
       initChart();
       startDataFetching();
       refreshData();
+      // B1: Cập nhật dual timestamp mỗi 10 giây
+      setInterval(updateDualTimestampDisplay, 10000);
     });
 
     // Load config từ localStorage
@@ -1586,10 +1590,10 @@
     }
 
     function setDataSource(source) {
+      // B2: chỉ còn cloud mode, hàm này giữ lại để không lỗi nếu có code cũ gọi
       if (config.dataSource !== source) {
-        config.dataSource = source;
+        config.dataSource = 'cloud'; // luôn force cloud
         localStorage.setItem('weather_dashboard_config', JSON.stringify(config));
-        updateSourceButtons();
         startDataFetching();
         refreshData();
       }
@@ -1866,19 +1870,18 @@
       weatherChart.update();
     }
 
-    // THU THẬP DỮ LIỆU
+    // THU THẬP DỮ LIỆU — B1: Dual interval, sensor nhanh (25s), AI chậm (5 phút)
     function startDataFetching() {
       if (fetchInterval) clearInterval(fetchInterval);
-      const intervalTime = (config.dataSource === 'local') ? 2000 : 16000;
-      fetchInterval = setInterval(refreshData, intervalTime);
+      if (aiPollInterval) clearInterval(aiPollInterval);
+      // Sensor: poll mỗi 25s (gateway gửi mỗi 60s, đây là đủ để không bỏ sót)
+      fetchInterval = setInterval(() => fetchFromThingSpeak(false), 25000);
+      // AI: poll mỗi 5 phút (AI chạy mỗi 15 phút, không cần fetch liên tục)
+      aiPollInterval = setInterval(() => fetchFromThingSpeak(true), 5 * 60 * 1000);
     }
 
     function refreshData() {
-      if (config.dataSource === 'local') {
-        fetchFromLocalESP();
-      } else {
-        fetchFromThingSpeak();
-      }
+      fetchFromThingSpeak(false);
     }
 
     function fetchFromLocalESP() {
@@ -1917,7 +1920,7 @@
         });
     }
 
-    function fetchFromThingSpeak() {
+    function fetchFromThingSpeak(aiOnly = false) {
       if (!config.channelId) {
         updateConnectionStatus(false, "Chưa điền Channel ID. Đang chạy mô phỏng.");
         generateMockData();
@@ -1939,7 +1942,44 @@
             throw new Error("Kênh trống.");
           }
           
-          updateConnectionStatus(true, "Đang kết nối: ThingSpeak Cloud OK");
+          // B1: Tìm entry mới nhất có dữ liệu cảm biến (field1 không null)
+          let latestSensorFeed = null;
+          for (let i = data.feeds.length - 1; i >= 0; i--) {
+            if (data.feeds[i].field1 !== null && data.feeds[i].field1 !== undefined && data.feeds[i].field1 !== '') {
+              latestSensorFeed = data.feeds[i];
+              break;
+            }
+          }
+
+          // B1: Tìm entry mới nhất có dữ liệu AI (field6 không null)
+          let latestAiFeed = null;
+          for (let i = data.feeds.length - 1; i >= 0; i--) {
+            if (data.feeds[i].field6 !== null && data.feeds[i].field6 !== undefined && data.feeds[i].field6 !== '') {
+              latestAiFeed = data.feeds[i];
+              break;
+            }
+          }
+
+          // Track timestamps riêng biệt
+          if (latestSensorFeed) lastSensorTime = new Date(latestSensorFeed.created_at);
+          if (latestAiFeed) lastAiTime = new Date(latestAiFeed.created_at);
+
+          // Nếu chỉ cần refresh AI (5-phút interval), không rebuild toàn bộ history
+          if (aiOnly) {
+            if (latestAiFeed) {
+              currentData.predictedTemp = latestAiFeed.field6 ? parseFloat(latestAiFeed.field6) : null;
+              const rainP = latestAiFeed.field7 ? parseFloat(latestAiFeed.field7) : null;
+              currentData.rainProbability = rainP;
+              currentData.predictedHum = latestAiFeed.field8 ? parseFloat(latestAiFeed.field8) : null;
+              currentData.predictedStatus = (rainP !== null && rainP > 50) ? 2 : (rainP !== null && rainP > 25 ? 1 : 0);
+              updateDualTimestampDisplay();
+              updateUI();
+            }
+            return;
+          }
+
+          // Full fetch — rebuild history
+          updateConnectionStatus(true, "Trực tuyến · ThingSpeak OK");
           
           historyData.timestamps = [];
           historyData.temperature = [];
@@ -1949,7 +1989,7 @@
           historyData.battery = [];
           historyData.predictedTemp = [];
           historyData.rainProbability = [];
-          historyData.pressureTrend = [];
+          historyData.predictedStatus = [];
           
           const getFirstNonNull = (fieldName, fallback) => {
             for (let i = 0; i < data.feeds.length; i++) {
@@ -1976,44 +2016,27 @@
             const date = new Date(feed.created_at);
             const timeStr = `${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
             
-            // Forward Fill Sensor Values
             let temp = (feed.field1 !== null && feed.field1 !== undefined && feed.field1 !== '') ? parseFloat(feed.field1) : null;
-            if (temp === null) {
-              temp = historyData.temperature.length > 0 ? historyData.temperature[historyData.temperature.length - 1] : firstVal.temp;
-            }
+            if (temp === null) temp = historyData.temperature.length > 0 ? historyData.temperature[historyData.temperature.length - 1] : firstVal.temp;
             
             let hum = (feed.field2 !== null && feed.field2 !== undefined && feed.field2 !== '') ? parseFloat(feed.field2) : null;
-            if (hum === null) {
-              hum = historyData.humidity.length > 0 ? historyData.humidity[historyData.humidity.length - 1] : firstVal.hum;
-            }
+            if (hum === null) hum = historyData.humidity.length > 0 ? historyData.humidity[historyData.humidity.length - 1] : firstVal.hum;
             
             let pres = (feed.field3 !== null && feed.field3 !== undefined && feed.field3 !== '') ? parseFloat(feed.field3) : null;
-            if (pres === null) {
-              pres = historyData.pressure.length > 0 ? historyData.pressure[historyData.pressure.length - 1] : firstVal.pres;
-            }
+            if (pres === null) pres = historyData.pressure.length > 0 ? historyData.pressure[historyData.pressure.length - 1] : firstVal.pres;
             
             let rainVal = (feed.field4 !== null && feed.field4 !== undefined && feed.field4 !== '') ? parseInt(feed.field4) : null;
-            if (rainVal === null) {
-              rainVal = historyData.rain.length > 0 ? historyData.rain[historyData.rain.length - 1] : firstVal.rain;
-            }
+            if (rainVal === null) rainVal = historyData.rain.length > 0 ? historyData.rain[historyData.rain.length - 1] : firstVal.rain;
             
             let bat = (feed.field5 !== null && feed.field5 !== undefined && feed.field5 !== '') ? parseInt(feed.field5) : null;
-            if (bat === null) {
-              bat = historyData.battery.length > 0 ? historyData.battery[historyData.battery.length - 1] : firstVal.bat;
-            }
+            if (bat === null) bat = historyData.battery.length > 0 ? historyData.battery[historyData.battery.length - 1] : firstVal.bat;
             
-            // Forward Fill Python AI values
             let predT = (feed.field6 !== null && feed.field6 !== undefined && feed.field6 !== '') ? parseFloat(feed.field6) : null;
-            if (predT === null) {
-              predT = historyData.predictedTemp.length > 0 ? historyData.predictedTemp[historyData.predictedTemp.length - 1] : firstVal.predT;
-            }
+            if (predT === null) predT = historyData.predictedTemp.length > 0 ? historyData.predictedTemp[historyData.predictedTemp.length - 1] : firstVal.predT;
             
             let rainP = (feed.field7 !== null && feed.field7 !== undefined && feed.field7 !== '') ? parseFloat(feed.field7) : null;
-            if (rainP === null) {
-              rainP = historyData.rainProbability.length > 0 ? historyData.rainProbability[historyData.rainProbability.length - 1] : firstVal.rainP;
-            }
+            if (rainP === null) rainP = historyData.rainProbability.length > 0 ? historyData.rainProbability[historyData.rainProbability.length - 1] : firstVal.rainP;
             
-            // Tính toán trạng thái thời tiết dự tính động dựa trên xác suất mưa (field7) và độ ẩm (field2)
             let predStat = (rainP !== null && rainP > 50) ? 2 : (rainP !== null && rainP > 25 ? 1 : 0);
             
             historyData.timestamps.push(timeStr);
@@ -2027,57 +2050,25 @@
             historyData.predictedStatus.push(predStat);
           });
           
-          // Tìm entry mới nhất có dữ liệu cảm biến (field1 không null)
-          let latestSensorFeed = null;
-          for (let i = data.feeds.length - 1; i >= 0; i--) {
-            if (data.feeds[i].field1 !== null && data.feeds[i].field1 !== undefined && data.feeds[i].field1 !== '') {
-              latestSensorFeed = data.feeds[i];
-              break;
-            }
-          }
-          if (!latestSensorFeed) {
-            latestSensorFeed = data.feeds[data.feeds.length - 1];
-          }
-
-          // Tìm entry mới nhất có dữ liệu MATLAB (field6 không null)
-          let latestMatlabFeed = null;
-          for (let i = data.feeds.length - 1; i >= 0; i--) {
-            if (data.feeds[i].field6 !== null && data.feeds[i].field6 !== undefined && data.feeds[i].field6 !== '') {
-              latestMatlabFeed = data.feeds[i];
-              break;
-            }
-          }
-          if (!latestMatlabFeed) {
-            latestMatlabFeed = data.feeds[data.feeds.length - 1];
-          }
-
-          if (latestSensorFeed && latestSensorFeed.field1 !== null && latestSensorFeed.field1 !== undefined && latestSensorFeed.field1 !== '') {
-            currentData.temperature = parseFloat(latestSensorFeed.field1);
-          }
-          if (latestSensorFeed && latestSensorFeed.field2 !== null && latestSensorFeed.field2 !== undefined && latestSensorFeed.field2 !== '') {
-            currentData.humidity = parseFloat(latestSensorFeed.field2);
-          }
-          if (latestSensorFeed && latestSensorFeed.field3 !== null && latestSensorFeed.field3 !== undefined && latestSensorFeed.field3 !== '') {
-            currentData.pressure = parseFloat(latestSensorFeed.field3);
-          }
-          if (latestSensorFeed && latestSensorFeed.field4 !== null && latestSensorFeed.field4 !== undefined && latestSensorFeed.field4 !== '') {
-            currentData.rain = parseInt(latestSensorFeed.field4);
-          }
-          if (latestSensorFeed && latestSensorFeed.field5 !== null && latestSensorFeed.field5 !== undefined && latestSensorFeed.field5 !== '') {
-            currentData.battery = parseInt(latestSensorFeed.field5);
+          // Cập nhật currentData từ 2 luồng riêng biệt
+          if (latestSensorFeed) {
+            if (latestSensorFeed.field1) currentData.temperature = parseFloat(latestSensorFeed.field1);
+            if (latestSensorFeed.field2) currentData.humidity = parseFloat(latestSensorFeed.field2);
+            if (latestSensorFeed.field3) currentData.pressure = parseFloat(latestSensorFeed.field3);
+            if (latestSensorFeed.field4) currentData.rain = parseInt(latestSensorFeed.field4);
+            if (latestSensorFeed.field5) currentData.battery = parseInt(latestSensorFeed.field5);
           }
           
-          currentData.predictedTemp = latestMatlabFeed.field6 !== null ? parseFloat(latestMatlabFeed.field6) : null;
-          const latestRainP = latestMatlabFeed.field7 !== null ? parseFloat(latestMatlabFeed.field7) : null;
-          currentData.rainProbability = latestRainP;
-          currentData.predictedStatus = (latestRainP !== null && latestRainP > 50) ? 2 : (latestRainP !== null && latestRainP > 25 ? 1 : 0);
+          if (latestAiFeed) {
+            currentData.predictedTemp = latestAiFeed.field6 ? parseFloat(latestAiFeed.field6) : null;
+            const rainP = latestAiFeed.field7 ? parseFloat(latestAiFeed.field7) : null;
+            currentData.rainProbability = rainP;
+            currentData.predictedHum = latestAiFeed.field8 ? parseFloat(latestAiFeed.field8) : null;
+            currentData.predictedStatus = (rainP !== null && rainP > 50) ? 2 : (rainP !== null && rainP > 25 ? 1 : 0);
+          }
           
-          currentData.rssi = null; 
-          currentData.seqNum = null;
-          
-          const lastUpdateDate = new Date(data.feeds[data.feeds.length - 1].created_at);
-          currentData.lastUpdated = lastUpdateDate.toLocaleTimeString('vi-VN');
-          
+          currentData.rssi = null;
+          updateDualTimestampDisplay();
           updateUI();
           updateChartData();
           runLinearRegression();
@@ -2089,15 +2080,46 @@
         });
     }
 
-    function updateConnectionStatus(isOnline, text) {
-      const dot = document.getElementById('statusDot');
-      const txt = document.getElementById('statusText');
-      if (isOnline) {
-        dot.className = "status-dot online";
-      } else {
-        dot.className = "status-dot offline";
+    // B1 + B4: Hiển thị dual timestamp và stale indicator
+    function updateDualTimestampDisplay() {
+      const now = new Date();
+      
+      // Cảm biến
+      const sensorEl = document.getElementById('sensorAgoText');
+      if (sensorEl && lastSensorTime) {
+        const diffS = Math.floor((now - lastSensorTime) / 1000);
+        const stale = diffS > 300; // >5 phút = dữ liệu cũ
+        sensorEl.innerText = diffS < 60 ? `${diffS} giây trước` : `${Math.floor(diffS/60)} phút trước`;
+        sensorEl.style.color = stale ? '#ef4444' : ''; // B4: đỏ nếu stale
+        // B4: Gray out gauge nếu stale
+        const tempDisplay = document.getElementById('mainTemp');
+        if (tempDisplay) tempDisplay.style.opacity = stale ? '0.45' : '1';
+        const statusDot = document.getElementById('statusDot');
+        if (stale && statusDot) statusDot.className = 'status-dot offline';
+        else if (!stale && statusDot) statusDot.className = 'status-dot online';
+      } else if (sensorEl) {
+        sensorEl.innerText = 'chưa nhận được';
       }
-      txt.innerText = text;
+      
+      // AI
+      const aiEl = document.getElementById('aiAgoText');
+      if (aiEl && lastAiTime) {
+        const diffS = Math.floor((now - lastAiTime) / 1000);
+        aiEl.innerText = diffS < 60 ? `${diffS} giây trước` : `${Math.floor(diffS/60)} phút trước`;
+      } else if (aiEl) {
+        aiEl.innerText = 'mô hình chưa chạy';
+      }
+      
+      // Status text tổng hợp
+      const statusText = document.getElementById('statusText');
+      if (statusText && lastSensorTime) {
+        const diffS = Math.floor((now - lastSensorTime) / 1000);
+        if (diffS > 300) {
+          statusText.innerText = `Dữ liệu cũ · ${Math.floor(diffS/60)} phút trước`;
+        } else {
+          statusText.innerText = `Trực tuyến · cập nhật ${diffS < 60 ? diffS + 'giây' : Math.floor(diffS/60) + ' phút'} trước`;
+        }
+      }
     }
 
     function generateMockData() {
