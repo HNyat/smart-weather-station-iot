@@ -43,7 +43,7 @@ const char* staPassword = "1234567890@"; // ← ĐIỀN mật khẩu
 const char* THINGSPEAK_API_KEY = "IWSWJL8BLKHHGSG2"; // ← ĐIỀN Write API Key
 const char* THINGSPEAK_HOST    = "api.thingspeak.com";
 unsigned long lastTSsend = 0;
-const unsigned long TS_MIN_INTERVAL_MS = 16000; // Free tier: tối thiểu 15s/lần, dư 1s an toàn
+const unsigned long TS_MIN_INTERVAL_MS = 60000; // Đồng bộ tối thiểu 1 phút (60 giây) gửi 1 lần
 
 // =====================
 // Biến lưu trữ Dữ liệu thời tiết

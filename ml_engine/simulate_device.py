@@ -81,7 +81,7 @@ def main():
     print("  TRẠM THỜI TIẾT IOT - BỘ GIẢ LẬP PHẦN CỨNG (SENDER) ")
     print("====================================================")
     print(f"Thiết lập gửi dữ liệu lên ThingSpeak Write API Key: {WRITE_API_KEY}")
-    print("Chương trình sẽ tự động gửi gói tin mô phỏng sau mỗi 20 giây.")
+    print("Chương trình sẽ tự động gửi gói tin mô phỏng sau mỗi 60 giây.")
     print("Nhấn Ctrl + C để dừng.")
     print("----------------------------------------------------")
     
@@ -89,7 +89,7 @@ def main():
         while True:
             temp, hum, pres, rain, bat = generate_weather_metrics()
             upload_to_thingspeak(temp, hum, pres, rain, bat)
-            time.sleep(20)
+            time.sleep(60)
     except KeyboardInterrupt:
         print("\nĐã dừng bộ giả lập phần cứng.")
 
