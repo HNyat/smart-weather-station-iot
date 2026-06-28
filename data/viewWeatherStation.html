@@ -415,7 +415,113 @@
       font-weight: 700;
     }
 
+    /* AI MULTI-HORIZON FORECAST SECTION */
+    .ai-forecast-section {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 24px;
+      padding: 24px;
+      margin-bottom: 24px;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
+    }
+    
+    .ai-forecast-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+    
+    .ai-forecast-header h2 {
+      font-family: var(--font-display);
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+    
+    .ai-forecast-cards {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+    }
+    
+    @media (max-width: 768px) {
+      .ai-forecast-cards {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+    
+    @media (max-width: 480px) {
+      .ai-forecast-cards {
+        grid-template-columns: 1fr;
+      }
+    }
+    
+    .ai-forecast-card {
+      background: rgba(255, 140, 0, 0.04);
+      border: 1px solid rgba(255, 140, 0, 0.1);
+      border-radius: 16px;
+      padding: 16px;
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    
+    .ai-forecast-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 20px rgba(255, 140, 0, 0.08);
+      border-color: rgba(255, 140, 0, 0.2);
+    }
+    
+    .ai-card-title {
+      font-family: var(--font-display);
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+    }
+    
+    .ai-card-icon {
+      font-size: 32px;
+      line-height: 1;
+      margin: 4px 0;
+    }
+    
+    .ai-card-temp {
+      font-family: var(--font-display);
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--text-primary);
+      font-variant-numeric: tabular-nums;
+    }
+    
+    .ai-card-rain {
+      font-size: 11px;
+      color: var(--accent-hum);
+      font-weight: 600;
+      font-variant-numeric: tabular-nums;
+    }
+    
+    /* Confidence Decay Opacities */
+    .ai-card-1h { opacity: 1.0; }
+    .ai-card-3h { opacity: 0.85; }
+    .ai-card-6h { opacity: 0.75; }
+    .ai-card-12h { opacity: 0.6; }
+    
+    .ai-forecast-footer {
+      text-align: center;
+      margin-top: 12px;
+      font-size: 11px;
+      color: var(--text-muted);
+      font-style: italic;
+    }
+
     /* Balanced 2-Column Grid Layout */
+
     .balanced-grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
@@ -1176,8 +1282,50 @@
       </div>
     </section>
 
+    <!-- AI MULTI-HORIZON FORECAST SECTION (NGAY SAU HERO) -->
+    <section class="ai-forecast-section glass-card">
+      <div class="ai-forecast-header">
+        <span style="color: var(--warning); font-size: 16px;">💡</span>
+        <h2>Dự báo AI những giờ tới</h2>
+      </div>
+      <div class="ai-forecast-cards">
+        <!-- +1 Giờ Card -->
+        <div class="ai-forecast-card ai-card-1h">
+          <span class="ai-card-title">+1 giờ</span>
+          <span class="ai-card-icon" id="aiFCardIcon1">--</span>
+          <span class="ai-card-temp" id="aiFCardTemp1">--°C</span>
+          <span class="ai-card-rain" id="aiFCardRain1">--% mưa</span>
+        </div>
+        <!-- +3 Giờ Card -->
+        <div class="ai-forecast-card ai-card-3h">
+          <span class="ai-card-title">+3 giờ</span>
+          <span class="ai-card-icon" id="aiFCardIcon2">--</span>
+          <span class="ai-card-temp" id="aiFCardTemp2">--°C</span>
+          <span class="ai-card-rain" id="aiFCardRain2">--% mưa</span>
+        </div>
+        <!-- +6 Giờ Card -->
+        <div class="ai-forecast-card ai-card-6h">
+          <span class="ai-card-title">+6 giờ</span>
+          <span class="ai-card-icon" id="aiFCardIcon3">--</span>
+          <span class="ai-card-temp" id="aiFCardTemp3">--°C</span>
+          <span class="ai-card-rain" id="aiFCardRain3">--% mưa</span>
+        </div>
+        <!-- +12 Giờ Card -->
+        <div class="ai-forecast-card ai-card-12h">
+          <span class="ai-card-title">+12 giờ</span>
+          <span class="ai-card-icon" id="aiFCardIcon4">--</span>
+          <span class="ai-card-temp" id="aiFCardTemp4">--°C</span>
+          <span class="ai-card-rain" id="aiFCardRain4">--% mưa</span>
+        </div>
+      </div>
+      <div class="ai-forecast-footer">
+        Độ mờ giảm dần theo giờ — thể hiện trực tiếp độ tin cậy giảm (confidence decay)
+      </div>
+    </section>
+
     <!-- SYMMETRICAL 2-COLUMN LOWER GRID -->
     <div class="balanced-grid">
+
       <!-- LEFT COLUMN: SENSOR METRICS & MATLAB CLOUD CHARTS -->
       <div class="grid-column">
         
@@ -2320,11 +2468,56 @@
       } else {
         batBar.style.background = "var(--accent-bat-gradient)";
       }
+      // B1: rssiValue vẫn còn trong meta bar, seqNum và lastUpdated đã thay bằng dual timestamp
+      const rssiEl = document.getElementById('rssiValue');
+      if (rssiEl && currentData.rssi !== null) rssiEl.innerText = `${currentData.rssi} dBm`;
       
-      document.getElementById('rssiValue').innerText = `${currentData.rssi} dBm`;
-      document.getElementById('seqNum').innerText = currentData.seqNum;
-      document.getElementById('lastUpdated').innerText = currentData.lastUpdated || "--";
+      updateAiForecastCards();
     }
+
+    function updateAiForecastCards() {
+      const t0 = currentData.temperature || 25.0;
+      const t1 = currentData.predictedTemp !== null ? currentData.predictedTemp : t0;
+      
+      // Tính toán xu hướng từ nhiệt độ thực tế sang nhiệt độ dự đoán t+1h
+      const effSlopeT = t1 - t0;
+      const t3 = t1 + 2 * effSlopeT;
+      const t6 = t1 + 5 * effSlopeT;
+      const t12 = t1 + 11 * effSlopeT;
+      
+      const forecastTemps = [t1, t3, t6, t12].map(t => Math.max(12, Math.min(42, t)));
+      
+      // Tính toán xu hướng lượng mưa từ xác suất mưa thực tế sang t+1h
+      const p0 = currentData.rainProbability !== null ? currentData.rainProbability : (currentData.rain < 500 ? 80 : 10);
+      const p1 = currentData.rainProbability !== null ? currentData.rainProbability : p0;
+      
+      let slopeH = 0;
+      if (historyData.humidity.length >= 2) {
+        const regHum = calculateLinearRegression(historyData.humidity);
+        slopeH = regHum.a || 0;
+      }
+      const effSlopeP = (p1 - p0) || (slopeH > 0 ? 3 : -3);
+      
+      const p3 = Math.max(0, Math.min(100, p1 + 2 * effSlopeP));
+      const p6 = Math.max(0, Math.min(100, p1 + 5 * effSlopeP));
+      const p12 = Math.max(0, Math.min(100, p1 + 11 * effSlopeP));
+      
+      const forecastProbs = [p1, p3, p6, p12];
+      const icons = forecastProbs.map(p => p > 50 ? '🌧️' : (p > 25 ? '☁️' : '☀️'));
+      
+      // Hiển thị lên 4 card
+      for (let i = 0; i < 4; i++) {
+        const idx = i + 1;
+        const tempEl = document.getElementById(`aiFCardTemp${idx}`);
+        const rainEl = document.getElementById(`aiFCardRain${idx}`);
+        const iconEl = document.getElementById(`aiFCardIcon${idx}`);
+        
+        if (tempEl) tempEl.innerText = `${forecastTemps[i].toFixed(1)}°C`;
+        if (rainEl) rainEl.innerText = `${forecastProbs[i].toFixed(0)}% mưa`;
+        if (iconEl) iconEl.innerText = icons[i];
+      }
+    }
+
 
     function showAlertBox(show, msg = '') {
       const box = document.getElementById('alertBox');

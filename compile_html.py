@@ -225,6 +225,8 @@ def compile_html():
 
     let activeChartTab = 'temp';   // 'temp', 'hum', 'pres', 'rain', 'bat'
     let fetchInterval = null;
+    let lastSensorTime = null;
+    let lastAiTime = null;
 
     // KHỞI CHẠY TRANG
     document.addEventListener("DOMContentLoaded", () => {
@@ -232,7 +234,9 @@ def compile_html():
       initChart();
       startDataFetching();
       refreshData();
+      setInterval(updateDualTimestampDisplay, 10000);
     });
+
 
     // Load config từ localStorage
     function loadConfig() {
@@ -290,15 +294,16 @@ def compile_html():
       const stationModeText = document.getElementById('stationModeText');
       
       if (config.dataSource === 'cloud') {
-        btnCloud.classList.add('active');
-        btnLocal.classList.remove('active');
-        stationModeText.innerText = `ThingSpeak Channel: ${config.channelId}`;
+        if (btnCloud) btnCloud.classList.add('active');
+        if (btnLocal) btnLocal.classList.remove('active');
+        if (stationModeText) stationModeText.innerText = `ThingSpeak Channel: ${config.channelId}`;
       } else {
-        btnCloud.classList.remove('active');
-        btnLocal.classList.add('active');
-        stationModeText.innerText = `ESP8266 Local Server: http://${config.espIp}`;
+        if (btnCloud) btnCloud.classList.remove('active');
+        if (btnLocal) btnLocal.classList.add('active');
+        if (stationModeText) stationModeText.innerText = `ESP8266 Local Server: http://${config.espIp}`;
       }
     }
+
 
     // Set nguồn dữ liệu
     function setDataSource(source) {
@@ -815,12 +820,16 @@ def compile_html():
           currentData.seqNum = newSeqNum;
           currentData.lastUpdated = new Date().toLocaleTimeString('vi-VN');
           
+          lastSensorTime = new Date();
+          
           if (isNewPacket) {
             lastReceivedSeqNum = newSeqNum;
             addLocalHistory(currentData);
             runLinearRegression();
           }
           updateUI();
+          updateDualTimestampDisplay();
+
         })
         .catch(err => {
           console.warn("Không kết nối được ESP8266 local, chạy mô phỏng...", err);
@@ -988,15 +997,20 @@ def compile_html():
           currentData.rainProbability = latestRainP;
           currentData.predictedStatus = (latestRainP !== null && latestRainP > 50) ? 2 : (latestRainP !== null && latestRainP > 25 ? 1 : 0);
           
+          if (latestSensorFeed) lastSensorTime = new Date(latestSensorFeed.created_at);
+          if (latestMatlabFeed) lastAiTime = new Date(latestMatlabFeed.created_at);
+
           currentData.rssi = null; 
           currentData.seqNum = null;
           
           const lastUpdateDate = new Date(data.feeds[data.feeds.length - 1].created_at);
           currentData.lastUpdated = lastUpdateDate.toLocaleTimeString('vi-VN');
           
+          updateDualTimestampDisplay();
           updateUI();
           updateChartData();
           runLinearRegression();
+
         })
         .catch(err => {
           console.warn("Không kết nối được ThingSpeak, chạy mô phỏng...", err);
@@ -1013,11 +1027,48 @@ def compile_html():
       const dot = document.getElementById('statusDot');
       const txt = document.getElementById('statusText');
       if (isOnline) {
-        dot.className = "status-dot online";
+        if (dot) dot.className = "status-dot online";
       } else {
-        dot.className = "status-dot offline";
+        if (dot) dot.className = "status-dot offline";
       }
-      txt.innerText = text;
+      if (txt) txt.innerText = text;
+    }
+
+    function updateDualTimestampDisplay() {
+      const now = new Date();
+      
+      const sensorEl = document.getElementById('sensorAgoText');
+      if (sensorEl && lastSensorTime) {
+        const diffS = Math.floor((now - lastSensorTime) / 1000);
+        const stale = diffS > 300;
+        sensorEl.innerText = diffS < 60 ? `${diffS} giây trước` : `${Math.floor(diffS/60)} phút trước`;
+        sensorEl.style.color = stale ? '#ef4444' : '';
+        const tempDisplay = document.getElementById('mainTemp');
+        if (tempDisplay) tempDisplay.style.opacity = stale ? '0.45' : '1';
+        const statusDot = document.getElementById('statusDot');
+        if (stale && statusDot) statusDot.className = 'status-dot offline';
+        else if (!stale && statusDot) statusDot.className = 'status-dot online';
+      } else if (sensorEl) {
+        sensorEl.innerText = 'chưa nhận được';
+      }
+      
+      const aiEl = document.getElementById('aiAgoText');
+      if (aiEl && lastAiTime) {
+        const diffS = Math.floor((now - lastAiTime) / 1000);
+        aiEl.innerText = diffS < 60 ? `${diffS} giây trước` : `${Math.floor(diffS/60)} phút trước`;
+      } else if (aiEl) {
+        aiEl.innerText = 'mô hình chưa chạy';
+      }
+      
+      const statusText = document.getElementById('statusText');
+      if (statusText && lastSensorTime) {
+        const diffS = Math.floor((now - lastSensorTime) / 1000);
+        if (diffS > 300) {
+          statusText.innerText = `Dữ liệu cũ · ${Math.floor(diffS/60)} phút trước`;
+        } else {
+          statusText.innerText = `Trực tuyến · cập nhật ${diffS < 60 ? diffS + 'giây' : Math.floor(diffS/60) + ' phút'} trước`;
+        }
+      }
     }
 
     function generateMockData() {
@@ -1040,11 +1091,16 @@ def compile_html():
       currentData.seqNum = (currentData.seqNum + 1) % 256;
       currentData.lastUpdated = new Date().toLocaleTimeString('vi-VN');
       
+      lastSensorTime = new Date();
+      lastAiTime = new Date();
+      
       addLocalHistory(currentData);
       updateUI();
+      updateDualTimestampDisplay();
       updateChartData();
       runLinearRegression();
     }
+
 
     function addLocalHistory(data) {
       const now = new Date();
@@ -1208,10 +1264,59 @@ def compile_html():
         batBar.style.background = "var(--accent-bat-gradient)";
       }
       
-      document.getElementById('rssiValue').innerText = currentData.rssi !== null ? `${currentData.rssi} dBm` : "--";
-      document.getElementById('seqNum').innerText = currentData.seqNum !== null ? currentData.seqNum : "--";
-      document.getElementById('lastUpdated').innerText = currentData.lastUpdated || "--";
+      const rssiEl = document.getElementById('rssiValue');
+      if (rssiEl) rssiEl.innerText = currentData.rssi !== null ? `${currentData.rssi} dBm` : "--";
+      
+      const seqEl = document.getElementById('seqNum');
+      if (seqEl) seqEl.innerText = currentData.seqNum !== null ? currentData.seqNum : "--";
+      
+      const updatedEl = document.getElementById('lastUpdated');
+      if (updatedEl) updatedEl.innerText = currentData.lastUpdated || "--";
+      
+      updateAiForecastCards();
     }
+
+    function updateAiForecastCards() {
+      const t0 = currentData.temperature || 25.0;
+      const t1 = currentData.predictedTemp !== null ? currentData.predictedTemp : t0;
+      
+      const effSlopeT = t1 - t0;
+      const t3 = t1 + 2 * effSlopeT;
+      const t6 = t1 + 5 * effSlopeT;
+      const t12 = t1 + 11 * effSlopeT;
+      
+      const forecastTemps = [t1, t3, t6, t12].map(t => Math.max(12, Math.min(42, t)));
+      
+      const p0 = currentData.rainProbability !== null ? currentData.rainProbability : (currentData.rain < 500 ? 80 : 10);
+      const p1 = currentData.rainProbability !== null ? currentData.rainProbability : p0;
+      
+      let slopeH = 0;
+      if (historyData.humidity.length >= 2) {
+        const regHum = calculateLinearRegression(historyData.humidity);
+        slopeH = regHum.a || 0;
+      }
+      const effSlopeP = (p1 - p0) || (slopeH > 0 ? 3 : -3);
+      
+      const p3 = Math.max(0, Math.min(100, p1 + 2 * effSlopeP));
+      const p6 = Math.max(0, Math.min(100, p1 + 5 * effSlopeP));
+      const p12 = Math.max(0, Math.min(100, p1 + 11 * effSlopeP));
+      
+      const forecastProbs = [p1, p3, p6, p12];
+      const icons = forecastProbs.map(p => p > 50 ? '🌧️' : (p > 25 ? '☁️' : '☀️'));
+      
+      for (let i = 0; i < 4; i++) {
+        const idx = i + 1;
+        const tempEl = document.getElementById(`aiFCardTemp${idx}`);
+        const rainEl = document.getElementById(`aiFCardRain${idx}`);
+        const iconEl = document.getElementById(`aiFCardIcon${idx}`);
+        
+        if (tempEl) tempEl.innerText = `${forecastTemps[i].toFixed(1)}°C`;
+        if (rainEl) rainEl.innerText = `${forecastProbs[i].toFixed(0)}% mưa`;
+        if (iconEl) iconEl.innerText = icons[i];
+      }
+    }
+
+
 
     function showAlertBox(show, msg = '') {
       const box = document.getElementById('alertBox');
@@ -1403,8 +1508,6 @@ def compile_html():
       `;
       tooltip.style.display = 'block';
       moveChartTooltip(evt);
-    };
-
     window.moveChartTooltip = function(evt) {
       const tooltip = document.getElementById('chart-tooltip');
       if (tooltip) {
@@ -1426,7 +1529,7 @@ def compile_html():
         return;
       }
       let csvContent = "data:text/csv;charset=utf-8,";
-      csvContent += "Timestamp,Temperature,Humidity,Pressure,Rain,Battery,Predicted_Temp,Rain_Probability,Predicted_Status\\\\n";
+      csvContent += "Timestamp,Temperature,Humidity,Pressure,Rain,Battery,Predicted_Temp,Rain_Probability,Predicted_Status\\n";
       for (let i = 0; i < historyData.timestamps.length; i++) {
         let row = [
           historyData.timestamps[i],
@@ -1439,7 +1542,7 @@ def compile_html():
           historyData.rainProbability[i],
           historyData.predictedStatus[i]
         ].join(",");
-        csvContent += row + "\\\\n";
+        csvContent += row + "\\n";
       }
       const encodedUri = encodeURI(csvContent);
       const link = document.createElement("a");
@@ -1455,16 +1558,20 @@ def compile_html():
     html_fixed = re.sub(r'<script>(.*?)</script>', f'<script>\\n{js_code}\\n  </script>', html, flags=re.DOTALL)
 
     # 6. Save the optimized single-page HTML directly to root index.html
+    # For the web version, default to 'cloud'
+    html_index = html_fixed.replace("dataSource: 'local'", "dataSource: 'cloud'")
     print("Writing optimized HTML dashboard to 'index.html' at workspace root...")
     with open("index.html", "w", encoding="utf-8") as f:
-        f.write(html_fixed)
+        f.write(html_index)
 
     # 7. Wrap it in weather_html.h using a C++ raw string literal
+    # For the local firmware, default to 'local'
+    html_local = html_fixed.replace("dataSource: 'cloud'", "dataSource: 'local'")
     header_content = f"""#ifndef WEATHER_HTML_H
 #define WEATHER_HTML_H
 
 const char htmlPage[] PROGMEM = R"rawliteral(
-{html_fixed}
+{html_local}
 )rawliteral";
 
 #endif
@@ -1476,6 +1583,7 @@ const char htmlPage[] PROGMEM = R"rawliteral(
         f.write(header_content)
 
     print("Compilation completed successfully! Both 'index.html' and 'gateway_node/weather_html.h' are up to date.")
+
 
 if __name__ == "__main__":
     compile_html()
