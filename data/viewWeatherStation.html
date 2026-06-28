@@ -1574,18 +1574,10 @@
     }
 
     function updateSourceButtons() {
-      const btnCloud = document.getElementById('btnCloud');
-      const btnLocal = document.getElementById('btnLocal');
+      // B2: btnCloud và btnLocal đã bị xóa khỏi UI — hàm này chỉ cập nhật stationModeText
       const stationModeText = document.getElementById('stationModeText');
-      
-      if (config.dataSource === 'cloud') {
-        btnCloud.classList.add('active');
-        btnLocal.classList.remove('active');
+      if (stationModeText) {
         stationModeText.innerText = `ThingSpeak Channel: ${config.channelId}`;
-      } else {
-        btnCloud.classList.remove('active');
-        btnLocal.classList.add('active');
-        stationModeText.innerText = `ESP8266 Local Server: http://${config.espIp}`;
       }
     }
 
@@ -2078,6 +2070,17 @@
           updateConnectionStatus(false, "Không lấy được dữ liệu Cloud. Đang chạy mô phỏng.");
           generateMockData();
         });
+    }
+
+    function updateConnectionStatus(isOnline, text) {
+      const dot = document.getElementById('statusDot');
+      const txt = document.getElementById('statusText');
+      if (isOnline) {
+        dot.className = "status-dot online";
+      } else {
+        dot.className = "status-dot offline";
+      }
+      if (txt) txt.innerText = text;
     }
 
     // B1 + B4: Hiển thị dual timestamp và stale indicator
