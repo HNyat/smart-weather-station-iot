@@ -2,8 +2,8 @@ name: Automated Weather Predictor (Python ML)
 
 on:
   schedule:
-    # Chạy mỗi 30 phút một lần
-    - cron: '*/30 * * * *'
+    # Chạy mỗi 15 phút một lần — đồng bộ với chu kỳ MATLAB Analysis trên ThingSpeak
+    - cron: '*/15 * * * *'
   workflow_dispatch:
     # Cho phép kích hoạt thủ công từ giao diện GitHub để test demo
 

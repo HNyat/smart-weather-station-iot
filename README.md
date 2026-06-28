@@ -64,8 +64,8 @@ graph TD
    - Vừa làm trạm phát sóng WiFi AP nội bộ cho người dùng kết nối trực tiếp, vừa tự động kết nối vào WiFi trạm để đẩy dữ liệu lên Cloud ThingSpeak.
    - Cung cấp API nội bộ `/data` dạng định dạng JSON chuẩn.
 3. **Mô hình Trí Tuệ Nhân Tạo Dự Báo Thời Tiết (AI Engine)**:
-   - **Mô hình Random Forest (Python)**: Được huấn luyện dựa trên dữ liệu lịch sử thời tiết 3 năm thực tế (API Open-Meteo), tự động phân loại trạng thái thời tiết (Nắng ráo, Nhiều mây, Mưa dông) và dự báo nhiệt độ, độ ẩm sau 1 giờ tịnh tiến với độ chính xác cao.
-   - **GitHub Actions Integration**: Quy trình dự báo chạy tự động mỗi 30 phút trên GitHub Runner bằng cách gọi mô hình học máy đã huấn luyện sẵn và ghi kết quả ngược lại ThingSpeak.
+   - **Mô hình Random Forest (Python)**: Được huấn luyện dựa trên **3 năm dữ liệu lịch sử thời tiết thực tế tại TP. Hồ Chí Minh (khí hậu 2 mùa: khô/mưa)** lấy từ API Open-Meteo, tự động phân loại trạng thái thời tiết (Nắng ráo, Nhiều mây, Mưa dông) và dự báo nhiệt độ, độ ẩm sau 1 giờ. **Độ chính xác đạt: Nhiệt độ MAE ≤ 0.4°C, Độ ẩm MAE ≤ 2.4%, Phân loại thời tiết Accuracy ≈ 88%.**
+   - **GitHub Actions Integration**: Quy trình dự báo chạy tự động **mỗi 15 phút** trên GitHub Runner bằng cách gọi mô hình học máy đã huấn luyện sẵn và ghi kết quả ngược lại ThingSpeak — đồng bộ với chu kỳ MATLAB Analysis.
    - **MATLAB Analysis (Hồi quy tuyến tính)**: Thiết lập dự phòng trực tiếp trên nền tảng ThingSpeak để dự toán nhiệt độ và xu hướng áp suất nếu mô hình AI Python ngoại tuyến.
 4. **Dashboard Hiện Đại & Trực Quan (HTML/CSS/JS thuần & SVG Chart)**:
    - Hỗ trợ chế độ màu tối (Dark Mode), hiệu ứng kính mờ (Glassmorphism), biểu đồ thời gian thực dạng SVG tự thân vẽ siêu nhẹ không phụ thuộc thư viện bên ngoài.
@@ -136,7 +136,7 @@ Sử dụng công cụ **Arduino IDE** để nạp chương trình:
 | **Field 5** | Dung lượng Pin trạm phát (%) | Gateway Node (Sensor) |
 | **Field 6** | Dự báo nhiệt độ chu kỳ tới (°C) | Python AI / MATLAB |
 | **Field 7** | Xác suất mưa dự đoán (%) | Python AI / MATLAB |
-| **Field 8** | Trạng thái thời tiết (0: Nắng, 1: Mây, 2: Mưa) | Python AI / MATLAB |
+| **Field 8** | Dự báo độ ẩm chu kỳ tới (%) | Python AI / MATLAB |
 
 ---
 
