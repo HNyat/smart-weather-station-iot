@@ -530,6 +530,16 @@ def compile_html():
         });
       }
 
+      // Slice the history data to show only the last 30 points on the charts
+      const maxPlotPoints = 30;
+      const startIdx = Math.max(0, timestamps.length - maxPlotPoints);
+      const slicedTimestamps = timestamps.slice(startIdx);
+      
+      // Slice the dataset arrays
+      datasets.forEach(ds => {
+        ds.data = ds.data.slice(startIdx);
+      });
+
       // Lấy tất cả giá trị hợp lệ để tính min/max
       let allValues = [];
       datasets.forEach(ds => {
@@ -565,11 +575,11 @@ def compile_html():
 
       // Tính toán nhãn thời gian mở rộng và độ lệch (shiftOffset) cho T+1h dự báo
       let shiftOffset = 10; // Mặc định: 10 điểm dữ liệu tương đương 1 giờ
-      if (timestamps.length > 1) {
+      if (slicedTimestamps.length > 1) {
         let timeDiffs = [];
-        for (let i = 1; i < timestamps.length; i++) {
-          let [h1, m1] = timestamps[i-1].split(':').map(Number);
-          let [h2, m2] = timestamps[i].split(':').map(Number);
+        for (let i = 1; i < slicedTimestamps.length; i++) {
+          let [h1, m1] = slicedTimestamps[i-1].split(':').map(Number);
+          let [h2, m2] = slicedTimestamps[i].split(':').map(Number);
           let diff = (h2 * 60 + m2) - (h1 * 60 + m1);
           if (diff < 0) diff += 1440;
           if (diff > 0 && diff < 60) timeDiffs.push(diff);
@@ -578,11 +588,11 @@ def compile_html():
         shiftOffset = Math.max(1, Math.round(60 / avgDiff));
       }
 
-      let extendedTimestamps = [...timestamps];
-      if (timestamps.length > 0) {
-        let lastTimeStr = timestamps[timestamps.length - 1];
+      let extendedTimestamps = [...slicedTimestamps];
+      if (slicedTimestamps.length > 0) {
+        let lastTimeStr = slicedTimestamps[slicedTimestamps.length - 1];
         let [hh, mm] = lastTimeStr.split(':').map(Number);
-        let avgInterval = timestamps.length > 1 ? 60 / shiftOffset : 6.0;
+        let avgInterval = slicedTimestamps.length > 1 ? 60 / shiftOffset : 6.0;
         for(let i = 1; i <= shiftOffset; i++) {
           let totalMinutes = Math.round(mm + i * avgInterval);
           let n_mm = totalMinutes % 60;
@@ -591,7 +601,7 @@ def compile_html():
         }
       }
 
-      const totalPoints = timestamps.length + shiftOffset;
+      const totalPoints = slicedTimestamps.length + shiftOffset;
       const width = 650; // Khung viewBox cố định, co giãn responsive theo CSS
       const height = 220;
       const padLeft = 45;

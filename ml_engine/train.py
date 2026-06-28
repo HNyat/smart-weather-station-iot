@@ -26,9 +26,11 @@ os.makedirs(MODEL_DIR, exist_ok=True)
 os.makedirs(DATA_DIR, exist_ok=True)
 
 # 1. Configuration
-# Default coordinates: Hanoi, Vietnam (Latitude: 21.0285, Longitude: 105.8542)
-LATITUDE = 21.0285
-LONGITUDE = 105.8542
+# Tọa độ: TP. Hồ Chí Minh, Việt Nam (khí hậu 2 mùa: khô/mưa — phù hợp Nam Bộ)
+# Thay đổi thành tọa độ GPS chính xác của vị trí trạm thật nếu không đặt tại TP.HCM
+# Ví dụ: Bình Dương (10.9804, 106.6519), Long An (10.5350, 106.4127), Cần Thơ (10.0452, 105.7469)
+LATITUDE = 10.7769
+LONGITUDE = 106.7009
 DATASET_PATH = os.path.join(DATA_DIR, "historical_weather.csv")
 
 def fetch_historical_data():
