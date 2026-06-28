@@ -25,10 +25,15 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Compile HTML
+        run: |
+          python compile_html.py
+
       - name: Prepare static files
         run: |
           mkdir dist
           cp index.html dist/
+
 
       - name: Setup Pages
         uses: actions/configure-pages@v5

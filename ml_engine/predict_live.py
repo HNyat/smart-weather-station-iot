@@ -342,12 +342,16 @@ def upload_predictions(write_key, pred_temp, pred_hum, rain_prob):
     biểu đồ và dual-timestamp logic ở frontend.
     Gateway Node tự chịu trách nhiệm ghi field1-5 theo đúng thời gian đo thật.
     """
+    if not write_key or write_key.strip() == "":
+        print("CẢNH BÁO: Không có THINGSPEAK_WRITE_KEY. Bỏ qua bước cập nhật ThingSpeak.")
+        return
+
     url = f"https://api.thingspeak.com/update?api_key={write_key}"
     url += f"&field6={pred_temp:.2f}"         # Dự báo nhiệt độ +1h (°C)
     url += f"&field7={rain_prob:.1f}"          # Xác suất mưa dự đoán (%)
     url += f"&field8={pred_hum:.2f}"           # Dự báo độ ẩm +1h (%)
     
-    print(f"Đang tải kết quả dự báo và dữ liệu cảm biến đồng nhất lên ThingSpeak...")
+    print(f"Đang tải kết quả dự báo lên ThingSpeak...")
     try:
         response = requests.get(url, timeout=10)
         response.raise_for_status()
@@ -412,19 +416,54 @@ def save_to_local_db(timestamp, temp, hum, pres, rain, bat, pred_temp, pred_hum,
         print(f"Lỗi khi lưu dữ liệu vào SQLite cục bộ: {e}")
 
 def main():
-    check_models_exist()
+    # Cho phép ghi đè thông tin bằng Environment Variables (xử lý rỗng và fallback đúng cách)
+    channel_env = os.environ.get("THINGSPEAK_CHANNEL_ID")
+    channel_id = channel_env if (channel_env and channel_env.strip() != "") else "3413241"
     
-    # Cho phép ghi đè thông tin bằng Environment Variables (tiện lợi cho GitHub Actions)
-    channel_id = os.environ.get("THINGSPEAK_CHANNEL_ID", CHANNEL_ID)
-    read_key = os.environ.get("THINGSPEAK_READ_KEY", READ_API_KEY)
-    write_key = os.environ.get("THINGSPEAK_WRITE_KEY", WRITE_API_KEY)
+    read_env = os.environ.get("THINGSPEAK_READ_KEY")
+    read_key = read_env if (read_env and read_env.strip() != "") else "VISWQT7BABDVZOFS"
     
-    # Tải các mô hình
+    write_env = os.environ.get("THINGSPEAK_WRITE_KEY")
+    write_key = write_env if (write_env and write_env.strip() != "") else ""
+    
+    print(f"Cấu hình chạy AI: Channel ID = {channel_id}, Read API Key = {read_key[:4]}***")
+
+    # Kiểm tra xem mô hình có tồn tại không
+    required_paths = [MODEL_TEMP_PATH, MODEL_HUM_PATH, MODEL_STATUS_PATH, FEATURE_COLS_PATH]
+    models_exist = all(os.path.exists(p) for p in required_paths)
+
+    # Tải hoặc huấn luyện lại mô hình
+    if not models_exist:
+        print("CẢNH BÁO: Không tìm thấy các file mô hình. Đang tự động huấn luyện...")
+        try:
+            sys.path.append(SCRIPT_DIR)
+            from train import train_and_evaluate
+            train_and_evaluate()
+        except Exception as train_err:
+            print(f"LỖI: Không thể tự động huấn luyện mô hình: {train_err}")
+            sys.exit(1)
+
     print("Đang tải các mô hình ML...")
-    model_temp = joblib.load(MODEL_TEMP_PATH)
-    model_hum = joblib.load(MODEL_HUM_PATH)
-    model_status = joblib.load(MODEL_STATUS_PATH)
-    feature_cols = joblib.load(FEATURE_COLS_PATH)
+    try:
+        model_temp = joblib.load(MODEL_TEMP_PATH)
+        model_hum = joblib.load(MODEL_HUM_PATH)
+        model_status = joblib.load(MODEL_STATUS_PATH)
+        feature_cols = joblib.load(FEATURE_COLS_PATH)
+    except Exception as load_err:
+        print(f"CẢNH BÁO: Lỗi khi tải mô hình (có thể do sai khác phiên bản scikit-learn): {load_err}")
+        print("Đang tự động huấn luyện lại mô hình tương thích với môi trường hiện tại...")
+        try:
+            sys.path.append(SCRIPT_DIR)
+            from train import train_and_evaluate
+            train_and_evaluate()
+            # Thử load lại sau khi train
+            model_temp = joblib.load(MODEL_TEMP_PATH)
+            model_hum = joblib.load(MODEL_HUM_PATH)
+            model_status = joblib.load(MODEL_STATUS_PATH)
+            feature_cols = joblib.load(FEATURE_COLS_PATH)
+        except Exception as retrain_err:
+            print(f"LỖI: Huấn luyện lại thất bại: {retrain_err}")
+            sys.exit(1)
     
     try:
         feeds = fetch_latest_feeds(channel_id, read_key)
@@ -434,7 +473,9 @@ def main():
         upload_predictions(write_key, pred_temp, pred_hum, rain_prob)
         save_to_local_db(timestamp, temp_t, hum_t, pres_t, rain_t, bat_t, pred_temp, pred_hum, rain_prob, pred_status, pres_diff)
     except Exception as e:
-        print(f"Lỗi xảy ra trong quá trình thực thi: {e}")
+        print(f"Lỗi nghiêm trọng xảy ra trong quá trình thực thi: {e}")
+        sys.exit(1)
 
 if __name__ == "__main__":
     main()
+
