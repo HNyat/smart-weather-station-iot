@@ -1493,9 +1493,9 @@
 
     // --- Dữ liệu hiện tại ---
     let currentData = {
-      temperature: 0,
-      humidity: 0,
-      pressure: 0,
+      temperature: 25.0,
+      humidity: 60,
+      pressure: 1011.3,
       rain: 1023,
       battery: 100,
       predictedTemp: null,         // field6 (Python AI dự báo nhiệt độ)
@@ -1924,7 +1924,7 @@
         return;
       }
       
-      let url = `https://api.thingspeak.com/channels/${config.channelId}/feeds.json?results=20`;
+      let url = `https://api.thingspeak.com/channels/${config.channelId}/feeds.json?results=100`;
       if (config.readApiKey) {
         url += `&api_key=${config.readApiKey}`;
       }
@@ -2051,11 +2051,21 @@
             latestMatlabFeed = data.feeds[data.feeds.length - 1];
           }
 
-          currentData.temperature = latestSensorFeed.field1 !== null ? parseFloat(latestSensorFeed.field1) : 0;
-          currentData.humidity = latestSensorFeed.field2 !== null ? parseFloat(latestSensorFeed.field2) : 0;
-          currentData.pressure = latestSensorFeed.field3 !== null ? parseFloat(latestSensorFeed.field3) : 0;
-          currentData.rain = latestSensorFeed.field4 !== null ? parseInt(latestSensorFeed.field4) : 1023;
-          currentData.battery = latestSensorFeed.field5 !== null ? parseInt(latestSensorFeed.field5) : 100;
+          if (latestSensorFeed && latestSensorFeed.field1 !== null && latestSensorFeed.field1 !== undefined && latestSensorFeed.field1 !== '') {
+            currentData.temperature = parseFloat(latestSensorFeed.field1);
+          }
+          if (latestSensorFeed && latestSensorFeed.field2 !== null && latestSensorFeed.field2 !== undefined && latestSensorFeed.field2 !== '') {
+            currentData.humidity = parseFloat(latestSensorFeed.field2);
+          }
+          if (latestSensorFeed && latestSensorFeed.field3 !== null && latestSensorFeed.field3 !== undefined && latestSensorFeed.field3 !== '') {
+            currentData.pressure = parseFloat(latestSensorFeed.field3);
+          }
+          if (latestSensorFeed && latestSensorFeed.field4 !== null && latestSensorFeed.field4 !== undefined && latestSensorFeed.field4 !== '') {
+            currentData.rain = parseInt(latestSensorFeed.field4);
+          }
+          if (latestSensorFeed && latestSensorFeed.field5 !== null && latestSensorFeed.field5 !== undefined && latestSensorFeed.field5 !== '') {
+            currentData.battery = parseInt(latestSensorFeed.field5);
+          }
           
           currentData.predictedTemp = latestMatlabFeed.field6 !== null ? parseFloat(latestMatlabFeed.field6) : null;
           const latestRainP = latestMatlabFeed.field7 !== null ? parseFloat(latestMatlabFeed.field7) : null;
