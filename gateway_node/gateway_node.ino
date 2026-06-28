@@ -15,6 +15,8 @@
 #define SS    D8
 #define RST   D0
 #define DIO0  D1
+#define BUZZER_PIN D5 // Chân còi báo động (Active High)
+
 
 
 
@@ -281,7 +283,9 @@ void handleAutoSync() {
 void setup() {
   Serial.begin(115200);
 
-
+  // Khởi tạo còi báo động
+  pinMode(BUZZER_PIN, OUTPUT);
+  digitalWrite(BUZZER_PIN, LOW);
 
   // Bật LittleFS
   if(!LittleFS.begin()) {
@@ -362,12 +366,21 @@ void loop() {
     rssi = LoRa.packetRssi();       
     seqNum = pkt.seq_num;           
 
+    // Kiểm tra điều kiện còi kêu: nhiệt độ > 40 độ C VÀ trời mưa (rain < 500)
+    if (temperature > 40.0f && rain < 500) {
+      digitalWrite(BUZZER_PIN, HIGH); // Bật còi báo động kêu
+      Serial.println("[CẢNH BÁO] Phát hiện Nhiệt độ cực cao (>40°C) VÀ trời đang mưa! Bật còi báo động.");
+    } else {
+      digitalWrite(BUZZER_PIN, LOW); // Tắt còi
+    }
+
     Serial.println("--- GÓI TIN MỚI ---");
     Serial.print("Nhiệt độ: "); Serial.print(temperature); Serial.println(" C");
     Serial.print("Độ ẩm: "); Serial.print(humidity); Serial.println(" %");
     Serial.print("Áp suất: "); Serial.print(pressure); Serial.println(" hPa");
     Serial.print("Mưa: "); Serial.println(rain);
     Serial.printf("RSSI: %d dBm | Seq: %d\n", rssi, seqNum);
+
 
     // Gửi lên ThingSpeak nếu có WiFi và không bận gửi bù, ngược lại thì lưu offline
     if (WiFi.status() == WL_CONNECTED && !isSyncing) {

@@ -1138,8 +1138,24 @@ def compile_html():
       let iconHtml = '';
       
       const isRaining = currentData.rain < 500;
+      const isExtremeAlert = currentData.temperature > 40.0 && isRaining;
       
-      if (isRaining) {
+      if (isExtremeAlert) {
+        summary = '🚨 BÁO ĐỘNG ĐỎ: Nhiệt độ cực cao (>40°C) kèm theo mưa dông! Nguy cơ chập cháy điện và sốc nhiệt nghiêm trọng. Đã kích hoạt còi báo động!';
+        statusTag = 'Báo động cực đoan';
+        iconHtml = `
+          <svg viewBox="0 0 64 64" width="80" height="80" class="weather-icon-svg sun-cloud-anim" style="filter: drop-shadow(0 6px 12px rgba(239, 68, 68, 0.7))">
+            <circle cx="32" cy="32" r="16" fill="#ef4444"/>
+            <path d="M46 38a10 10 0 0 0-9-6 10.5 10.5 0 0 0-4 .8A12 12 0 1 0 22 50h24a10 10 0 0 0 0-20z" fill="#374151" opacity="0.95"/>
+            <line x1="20" y1="54" x2="18" y2="60" stroke="#ef4444" stroke-width="3" stroke-linecap="round"/>
+            <line x1="28" y1="54" x2="26" y2="60" stroke="#ef4444" stroke-width="3" stroke-linecap="round"/>
+            <line x1="36" y1="54" x2="34" y2="60" stroke="#ef4444" stroke-width="3" stroke-linecap="round"/>
+          </svg>
+        `;
+        showAlertBox(true, "🚨 CÒI BÁO ĐỘNG: Phát hiện Nhiệt độ cực cao (>40°C) VÀ trời đang mưa!");
+        startWebBuzzer();
+      } else if (isRaining) {
+        stopWebBuzzer();
         summary = 'Hiện có mưa dông khí quyển 🌧️. Bà con canh tác lưu ý rào chắn, kiểm tra hệ thống thoát nước chống úng rễ cà phê, tiêu và ngưng bón phân.';
         statusTag = 'Mưa dông úng ngập';
         iconHtml = `
@@ -1158,6 +1174,7 @@ def compile_html():
         `;
         showAlertBox(true, "⚠ Cảnh báo mưa úng! Kiểm tra ngay các rãnh thoát nước vườn sầu riêng Miền Tây và cà phê trũng.");
       } else {
+        stopWebBuzzer();
         showAlertBox(false);
         
         if (currentData.temperature > 34) {
@@ -1191,6 +1208,7 @@ def compile_html():
           `;
         }
       }
+
       
       document.getElementById('weatherSummary').innerText = summary;
       document.getElementById('weatherStatusTag').innerText = statusTag;
@@ -1328,6 +1346,45 @@ def compile_html():
         box.classList.add('hidden');
       }
     }
+
+    let audioCtx = null;
+    let buzzerInterval = null;
+    
+    function startWebBuzzer() {
+      if (buzzerInterval) return;
+      buzzerInterval = setInterval(() => {
+        try {
+          if (!audioCtx) {
+            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+          }
+          if (audioCtx.state === 'suspended') {
+            audioCtx.resume();
+          }
+          const osc = audioCtx.createOscillator();
+          const gain = audioCtx.createGain();
+          
+          osc.connect(gain);
+          gain.connect(audioCtx.destination);
+          
+          osc.type = 'square';
+          osc.frequency.setValueAtTime(1200, audioCtx.currentTime); // 1200Hz chói tai
+          gain.gain.setValueAtTime(0.15, audioCtx.currentTime); // Âm lượng vừa phải
+          
+          osc.start();
+          osc.stop(audioCtx.currentTime + 0.35); // Kêu trong 350ms
+        } catch (e) {
+          console.warn("Chưa tương tác với trang web để phát còi báo âm thanh:", e);
+        }
+      }, 800); // Tít tít mỗi 800ms
+    }
+    
+    function stopWebBuzzer() {
+      if (buzzerInterval) {
+        clearInterval(buzzerInterval);
+        buzzerInterval = null;
+      }
+    }
+
 
     // THUẬT TOÁN MÁY HỌC HỒI QUY TUYẾN TÍNH (LINEAR REGRESSION ENGINE)
     function calculateLinearRegression(yArr) {
