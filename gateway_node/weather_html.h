@@ -3105,7 +3105,10 @@ const char htmlPage[] PROGMEM = R"rawliteral(
       `;
       tooltip.style.display = 'block';
       moveChartTooltip(evt);
+    };
+
     window.moveChartTooltip = function(evt) {
+
       const tooltip = document.getElementById('chart-tooltip');
       if (tooltip) {
         tooltip.style.left = (evt.pageX + 12) + 'px';
@@ -3126,8 +3129,7 @@ const char htmlPage[] PROGMEM = R"rawliteral(
         return;
       }
       let csvContent = "data:text/csv;charset=utf-8,";
-      csvContent += "Timestamp,Temperature,Humidity,Pressure,Rain,Battery,Predicted_Temp,Rain_Probability,Predicted_Status
-";
+      csvContent += "Timestamp,Temperature,Humidity,Pressure,Rain,Battery,Predicted_Temp,Rain_Probability,Predicted_Status\n";
       for (let i = 0; i < historyData.timestamps.length; i++) {
         let row = [
           historyData.timestamps[i],
@@ -3140,8 +3142,7 @@ const char htmlPage[] PROGMEM = R"rawliteral(
           historyData.rainProbability[i],
           historyData.predictedStatus[i]
         ].join(",");
-        csvContent += row + "
-";
+        csvContent += row + "\n";
       }
       const encodedUri = encodeURI(csvContent);
       const link = document.createElement("a");

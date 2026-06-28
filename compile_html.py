@@ -1508,7 +1508,10 @@ def compile_html():
       `;
       tooltip.style.display = 'block';
       moveChartTooltip(evt);
+    };
+
     window.moveChartTooltip = function(evt) {
+
       const tooltip = document.getElementById('chart-tooltip');
       if (tooltip) {
         tooltip.style.left = (evt.pageX + 12) + 'px';
@@ -1554,8 +1557,9 @@ def compile_html():
     };
 """
 
-    # Replace the script block inside html
-    html_fixed = re.sub(r'<script>(.*?)</script>', f'<script>\\n{js_code}\\n  </script>', html, flags=re.DOTALL)
+    # Replace the script block inside html using a lambda to prevent backslash escaping
+    html_fixed = re.sub(r'<script>(.*?)</script>', lambda m: f'<script>\n{js_code}\n  </script>', html, flags=re.DOTALL)
+
 
     # 6. Save the optimized single-page HTML directly to root index.html
     # For the web version, default to 'cloud'
