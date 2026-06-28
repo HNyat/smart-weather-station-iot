@@ -332,13 +332,18 @@ def preprocess_and_predict(feeds, feature_cols, model_temp, model_hum, model_sta
     return pred_temp, pred_hum, rain_prob, pred_status, input_data["pres_diff"], temp_t, hum_t, pres_t, rain_t, bat_t, latest_row["created_at"]
 
 def upload_predictions(write_key, pred_temp, pred_hum, rain_prob, temp_t, hum_t, pres_t, rain_t, bat_t):
-    """Uploads predictions to ThingSpeak (fields 6-8) using partial update."""
+    """Uploads both predictions and carry-over latest sensor metrics to ThingSpeak (fields 1-8)"""
     url = f"https://api.thingspeak.com/update?api_key={write_key}"
+    url += f"&field1={temp_t:.2f}"
+    url += f"&field2={hum_t:.2f}"
+    url += f"&field3={pres_t:.2f}"
+    url += f"&field4={int(rain_t)}"
+    url += f"&field5={int(bat_t)}"
     url += f"&field6={pred_temp:.2f}"
     url += f"&field7={rain_prob:.1f}"
     url += f"&field8={pred_hum:.2f}" # Field 8 đổi thành dự báo độ ẩm
     
-    print(f"Đang tải kết quả dự báo lên ThingSpeak (Partial Update)...")
+    print(f"Đang tải kết quả dự báo và dữ liệu cảm biến đồng nhất lên ThingSpeak...")
     try:
         response = requests.get(url, timeout=10)
         response.raise_for_status()
