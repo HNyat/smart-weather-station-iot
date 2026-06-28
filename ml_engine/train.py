@@ -15,15 +15,21 @@ from sklearn.metrics import mean_squared_error, mean_absolute_error, accuracy_sc
 import joblib
 
 
-# Ensure output directories exist
-os.makedirs("models", exist_ok=True)
-os.makedirs("data", exist_ok=True)
+# Ensure output directories exist relative to the project root
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+PROJECT_ROOT = os.path.dirname(SCRIPT_DIR)
+
+MODEL_DIR = os.path.join(PROJECT_ROOT, "models")
+DATA_DIR = os.path.join(PROJECT_ROOT, "data")
+
+os.makedirs(MODEL_DIR, exist_ok=True)
+os.makedirs(DATA_DIR, exist_ok=True)
 
 # 1. Configuration
 # Default coordinates: Hanoi, Vietnam (Latitude: 21.0285, Longitude: 105.8542)
 LATITUDE = 21.0285
 LONGITUDE = 105.8542
-DATASET_PATH = "data/historical_weather.csv"
+DATASET_PATH = os.path.join(DATA_DIR, "historical_weather.csv")
 
 def fetch_historical_data():
     """
@@ -289,10 +295,10 @@ def train_and_evaluate():
         
     # 4. Lưu trữ Mô hình
     print("\n=== 4. Lưu trữ Mô hình đã huấn luyện thành công ===")
-    joblib.dump(model_temp, "models/temp_model.joblib")
-    joblib.dump(model_hum, "models/hum_model.joblib")
-    joblib.dump(model_status, "models/status_model.joblib")
-    joblib.dump(feature_cols, "models/feature_cols.joblib")
+    joblib.dump(model_temp, os.path.join(MODEL_DIR, "temp_model.joblib"))
+    joblib.dump(model_hum, os.path.join(MODEL_DIR, "hum_model.joblib"))
+    joblib.dump(model_status, os.path.join(MODEL_DIR, "status_model.joblib"))
+    joblib.dump(feature_cols, os.path.join(MODEL_DIR, "feature_cols.joblib"))
     print("Đã lưu các file model (.joblib) vào thư mục 'models/'.")
     print("Quá trình huấn luyện hoàn tất!")
 

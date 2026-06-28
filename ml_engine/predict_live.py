@@ -18,8 +18,13 @@ CHANNEL_ID = "3413241"
 READ_API_KEY = "VISWQT7BABDVZOFS"
 WRITE_API_KEY = "IWSWJL8BLKHHGSG2"
 
-# Paths to models
-MODEL_DIR = "models"
+# Paths to models relative to project root
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+PROJECT_ROOT = os.path.dirname(SCRIPT_DIR)
+
+MODEL_DIR = os.path.join(PROJECT_ROOT, "models")
+DATA_DIR = os.path.join(PROJECT_ROOT, "data")
+
 MODEL_TEMP_PATH = os.path.join(MODEL_DIR, "temp_model.joblib")
 MODEL_HUM_PATH = os.path.join(MODEL_DIR, "hum_model.joblib")
 MODEL_STATUS_PATH = os.path.join(MODEL_DIR, "status_model.joblib")
@@ -347,8 +352,8 @@ def upload_predictions(write_key, pred_temp, pred_hum, rain_prob, temp_t, hum_t,
 
 def save_to_local_db(timestamp, temp, hum, pres, rain, bat, pred_temp, pred_hum, rain_prob, pred_status, pres_diff):
     """Lưu trữ dữ liệu cảm biến thực tế và dự báo AI vào SQLite cục bộ"""
-    os.makedirs("data", exist_ok=True)
-    db_path = "data/sensor_warehouse.db"
+    os.makedirs(DATA_DIR, exist_ok=True)
+    db_path = os.path.join(DATA_DIR, "sensor_warehouse.db")
     
     print(f"Đang kết nối cơ sở dữ liệu SQLite cục bộ tại {db_path}...")
     try:
